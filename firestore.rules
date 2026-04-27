@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(ownerId) {
+      return isSignedIn() && request.auth.uid == ownerId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidCanvas(data) {
+      return data.name is string && data.name.size() <= 100 &&
+             data.shapes is string && data.shapes.size() <= 1000000 &&
+             data.ownerId == request.auth.uid &&
+             data.createdAt == request.time &&
+             data.updatedAt == request.time;
+    }
+
+    match /canvases/{canvasId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isSignedIn() && isValidCanvas(request.resource.data);
+      allow update: if isOwner(resource.data.ownerId) && 
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'shapes', 'updatedAt']) &&
+                      request.resource.data.name is string && request.resource.data.name.size() <= 100 &&
+                      request.resource.data.shapes is string && request.resource.data.shapes.size() <= 1000000 &&
+                      request.resource.data.updatedAt == request.time;
+      allow delete: if isOwner(resource.data.ownerId);
+    }
+  }
+}

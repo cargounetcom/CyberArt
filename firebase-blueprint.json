@@ -1,0 +1,24 @@
+{
+  "entities": {
+    "Canvas": {
+      "title": "Canvas",
+      "description": "A saved digital artwork canvas.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "The name of the artwork." },
+        "shapes": { "type": "string", "description": "JSON stringified shapes array." },
+        "ownerId": { "type": "string", "description": "UID of the owner." },
+        "originalId": { "type": "string", "description": "ID of the original canvas if this is a remix." },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "shapes", "ownerId", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "canvases/{canvasId}": {
+      "schema": "Canvas",
+      "description": "Stored canvases."
+    }
+  }
+}

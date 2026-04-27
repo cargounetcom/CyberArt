@@ -1,0 +1,59 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;700;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  
+  --color-pop-yellow: #FFDE03;
+  --color-pop-pink: #FF00FF;
+  --color-pop-cyan: #00FFFF;
+  --color-pop-green: #00FF00;
+  
+  --shadow-brutal: 4px 4px 0 0 rgba(0, 0, 0, 1);
+  --shadow-brutal-lg: 8px 8px 0 0 rgba(0, 0, 0, 1);
+  --shadow-brutal-sm: 2px 2px 0 0 rgba(0, 0, 0, 1);
+}
+
+body {
+  background: linear-gradient(135deg, #FFDE03 0%, #FF00FF 50%, #00FFFF 100%);
+  background-attachment: fixed;
+  color: black;
+  @apply font-sans min-h-screen text-black;
+}
+
+.brutal-border {
+  @apply border-4 border-black;
+}
+
+.brutal-shadow {
+  box-shadow: 4px 4px 0 0 rgba(0, 0, 0, 1);
+}
+
+.brutal-shadow-lg {
+  box-shadow: 8px 8px 0 0 rgba(0, 0, 0, 1);
+}
+
+.brutal-shadow-sm {
+  box-shadow: 2px 2px 0 0 rgba(0, 0, 0, 1);
+}
+
+.brutal-btn {
+  @apply brutal-border brutal-shadow bg-white font-black uppercase text-xs px-4 py-2 transition-all hover:translate-y-0.5 hover:shadow-none active:translate-y-1 inline-flex items-center justify-center gap-2;
+}
+
+.bg-pop-yellow { background-color: #FFDE03; }
+.bg-pop-pink { background-color: #FF00FF; }
+.bg-pop-cyan { background-color: #00FFFF; }
+.bg-pop-green { background-color: #00FF00; }
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: inline-flex;
+  animation: marquee 20s linear infinite;
+}
+

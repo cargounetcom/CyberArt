@@ -13,11 +13,41 @@ interface Work {
   prompt: string;
   imageUrl: string;
   originalUrl?: string;
-  category: 'NEURAL' | 'REMIX';
+  category: 'NEURAL' | 'REMIX' | 'FREE';
   match?: number;
 }
 
 const LIBRARY_WORKS: Work[] = [
+  {
+    id: 'free-1',
+    title: 'SYSTEM_CALIBRATION_01',
+    style: 'NEURAL_FREE',
+    color: '#00D1FF',
+    prompt: 'Free calibration image, abstract geometric patterns, blue and white pulse',
+    imageUrl: 'https://pollinations.ai/p/calibration%20image%20abstract%20geometric%20patterns%20blue%20and%20white%20pulse?width=1024&height=1024&seed=1&nologo=true',
+    category: 'FREE'
+  },
+  {
+    id: 'free-2',
+    title: 'SYSTEM_CALIBRATION_02',
+    style: 'NEURAL_FREE',
+    color: '#FF00FF',
+    prompt: 'Free calibration image, pink fluid waves, soft highlights',
+    imageUrl: 'https://pollinations.ai/p/calibration%20image%20pink%20fluid%20waves%20soft%20highlights?width=1024&height=1024&seed=2&nologo=true',
+    category: 'FREE'
+  },
+  {
+    id: 'remix-low-3',
+    title: 'GLITCH_CALIBRATION_3',
+    author: 'SYSTEM_GEN',
+    year: '2026',
+    style: 'RAW_NEURAL',
+    color: '#000000',
+    prompt: 'Low fidelity neural glitch, abstract noise, system calibration 03',
+    imageUrl: 'https://pollinations.ai/p/low%20fidelity%20neural%20glitch%20abstract%20noise%20system%203?width=1024&height=1024&seed=3&nologo=true',
+    category: 'NEURAL',
+    match: 3
+  },
   {
     id: 'remix-venus',
     title: 'VENUS_GLASS_CORE',
@@ -110,6 +140,71 @@ const LIBRARY_WORKS: Work[] = [
     match: 99
   },
   {
+    id: 'remix-rembrandt',
+    title: 'THE_NIGHT_GLITCH',
+    author: 'REMBRANDT',
+    year: '1642 / 2026',
+    style: 'BAROQUE_NEURAL',
+    color: '#451a03',
+    prompt: 'The Night Watch remix, dramatic chiaroscuro, glowing golden armor, volumetric neural energy, cinematic baroque lighting',
+    imageUrl: 'https://pollinations.ai/p/The%20Night%20Watch%20remix%20dramatic%20chiaroscuro%20glowing%20golden%20armor%20volumetric%20neural%20energy?width=1024&height=1024&seed=999&nologo=true',
+    originalUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/The_Night_Watch_-_HD.jpg/1280px-The_Night_Watch_-_HD.jpg',
+    category: 'REMIX',
+    match: 96
+  },
+  {
+    id: 'remix-delacroix',
+    title: 'LIBERTY_LEADING_v2',
+    author: 'EUGENE_DELACROIX',
+    year: '1830 / 2026',
+    style: 'ROMANTIC_CYBER',
+    color: '#991b1b',
+    prompt: 'Liberty Leading the People remix, cyberpunk revolution, holographic flags, smoky neon battlefield, oil paint textures',
+    imageUrl: 'https://pollinations.ai/p/Liberty%20Leading%20the%20People%20remix%20cyberpunk%20revolution%20holographic%20flags%20smoky%20neon%20battlefield?width=1024&height=1024&seed=888&nologo=true',
+    originalUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Eug%C3%A8ne_Delacroix_-_Le_28_juillet._La_Libert%C3%A9_guidant_le_peuple.jpg/800px-Eug%C3%A8ne_Delacroix_-_Le_28_juillet._La_Libert%C3%A9_guidant_le_peuple.jpg',
+    category: 'REMIX',
+    match: 97
+  },
+  {
+    id: 'remix-bosch',
+    title: 'GARDEN_OF_NEURAL_DELIGHTS',
+    author: 'HIERONYMUS_BOSCH',
+    year: '1500 / 2026',
+    style: 'SURREAL_DATASCAPE',
+    color: '#166534',
+    prompt: 'Garden of Earthly Delights remix, psychedelic detail, bio-mechanical hybrids, digital datascape, infinite detail zoom',
+    imageUrl: 'https://pollinations.ai/p/Garden%20of%20Earthly%20Delights%20remix%20psychedelic%20detail%20bio-mechanical%20hybrids%20digital%20datascape?width=1024&height=1024&seed=666&nologo=true',
+    originalUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/The_Garden_of_Earthly_Delights_by_Bosch_High_Resolution.jpg/1280px-The_Garden_of_Earthly_Delights_by_Bosch_High_Resolution.jpg',
+    category: 'REMIX',
+    match: 94
+  },
+  {
+    id: 'remix-picasso',
+    title: 'CUBIST_WAR_ECHO',
+    author: 'PABLO_PICASSO',
+    year: '1937 / 2026',
+    style: 'CUBIST_GLITCH',
+    color: '#525252',
+    prompt: 'Guernica remix, monochrome cubism, glitch distortion, skeletal neon highlights, sharp geometric pain',
+    imageUrl: 'https://pollinations.ai/p/Guernica%20remix%20monochrome%20cubism%20glitch%20distortion%20skeletal%20neon%20highlights?width=1024&height=1024&seed=444&nologo=true',
+    originalUrl: 'https://upload.wikimedia.org/wikipedia/en/thumb/7/74/PicassoGuernica.jpg/1280px-PicassoGuernica.jpg',
+    category: 'REMIX',
+    match: 98
+  },
+  {
+    id: 'remix-wood',
+    title: 'NEO_GOTHIC_COUPLE',
+    author: 'GRANT_WOOD',
+    year: '1930 / 2026',
+    style: 'RURAL_BRUTALISM',
+    color: '#d4d4d8',
+    prompt: 'American Gothic remix, cyber-rural aesthetic, glowing pitchfork, visor implants on farmer, wood texture glitch',
+    imageUrl: 'https://pollinations.ai/p/American%20Gothic%20remix%20cyber-rural%20aesthetic%20glowing%20pitchfork%20visor%20implants?width=1024&height=1024&seed=111&nologo=true',
+    originalUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Grant_Wood_-_American_Gothic_-_Google_Art_Project.jpg/800px-Grant_Wood_-_American_Gothic_-_Google_Art_Project.jpg',
+    category: 'REMIX',
+    match: 95
+  },
+  {
     id: 'ghostly-1',
     title: 'THE_ETHEREAL_VOID',
     style: 'GHOSTLY',
@@ -191,24 +286,60 @@ const LIBRARY_WORKS: Work[] = [
 ];
 
 export function Gallery({ onRemix }: { onRemix: (canvas: any) => void }) {
-  const [filter, setFilter] = useState<'ALL' | 'NEURAL' | 'REMIX'>('ALL');
+  const [filter, setFilter] = useState<'ALL' | 'NEURAL' | 'REMIX' | 'FREE'>('ALL');
+  const [matchRange, setMatchRange] = useState<number>(1);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
-  const filteredWorks = LIBRARY_WORKS.filter(w => filter === 'ALL' || w.category === filter);
+  const filteredWorks = LIBRARY_WORKS.filter(w => {
+    const categoryMatch = filter === 'ALL' || w.category === filter;
+    const scoreMatch = w.match ? w.match >= matchRange : true;
+    return categoryMatch && scoreMatch;
+  });
 
   return (
     <div className="space-y-12 pb-20">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b-8 border-black pb-8">
-        <div>
-          <h2 className="text-6xl font-black italic tracking-tighter uppercase leading-none">ArtRemix_Library</h2>
-          <p className="text-xs font-bold uppercase tracking-widest text-[#666] mt-2">Historical Masterpieces meets Neural Hallucinations</p>
+      <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-8 border-b-8 border-black pb-8">
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-6xl font-black italic tracking-tighter uppercase leading-none">ArtRemix_Library</h2>
+            <div className="flex items-center gap-4 mt-2">
+               <p className="text-xs font-bold uppercase tracking-widest text-[#666]">Historical Masterpieces meets Neural Hallucinations</p>
+               <div className="flex items-center gap-2 bg-black text-white px-2 py-0.5 text-[9px] font-black brutal-border-sm">
+                  <div className="w-1.5 h-1.5 bg-pop-green rounded-full animate-pulse" />
+                  ARTS_CULTURE_SYNC: ACTIVE
+               </div>
+            </div>
+          </div>
+          
+          <div className="flex flex-wrap gap-2">
+             <CategoryTab active={filter === 'ALL'} onClick={() => setFilter('ALL')} label="VIEW_ALL" />
+             <CategoryTab active={filter === 'REMIX'} onClick={() => setFilter('REMIX')} label="ART_REMIX" icon={<History size={12}/>} />
+             <CategoryTab active={filter === 'FREE'} onClick={() => setFilter('FREE')} label="FREE_SAMPLES" icon={<Sparkles size={12}/>} />
+             <CategoryTab active={filter === 'NEURAL'} onClick={() => setFilter('NEURAL')} label="NEURAL_ONLY" icon={<Layers size={12}/>} />
+          </div>
         </div>
-        
-        <div className="flex flex-wrap gap-2">
-           <CategoryTab active={filter === 'ALL'} onClick={() => setFilter('ALL')} label="VIEW_ALL" />
-           <CategoryTab active={filter === 'REMIX'} onClick={() => setFilter('REMIX')} label="ART_REMIX" icon={<History size={12}/>} />
-           <CategoryTab active={filter === 'NEURAL'} onClick={() => setFilter('NEURAL')} label="NEURAL_ONLY" icon={<Layers size={12}/>} />
+
+        <div className="brutal-border p-6 bg-pop-yellow brutal-shadow-sm flex flex-col gap-3 min-w-[300px]">
+           <div className="flex justify-between items-center">
+              <span className="text-[10px] font-black uppercase text-black flex items-center gap-2">
+                 <Filter size={12} />
+                 REMIX_STRENGTH_MIN
+              </span>
+              <span className="text-xl font-black italic">{matchRange}%</span>
+           </div>
+           <input 
+             type="range" 
+             min="1" 
+             max="99" 
+             value={matchRange}
+             onChange={(e) => setMatchRange(parseInt(e.target.value))}
+             className="w-full accent-black h-2 bg-white brutal-border-sm appearance-none cursor-pointer"
+           />
+           <div className="flex justify-between text-[8px] font-bold opacity-60">
+              <span>ALPHA_01%</span>
+              <span>ULTRA_99%</span>
+           </div>
         </div>
       </div>
 

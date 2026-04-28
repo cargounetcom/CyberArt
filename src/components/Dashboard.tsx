@@ -14,7 +14,9 @@ import {
   ShieldCheck,
   ExternalLink,
   Copy,
-  Plus
+  Plus,
+  Download,
+  Sparkles
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { auth } from '../lib/firebase';
@@ -28,13 +30,44 @@ interface ApiKey {
 }
 
 export function Dashboard() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'api' | 'docs'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'api' | 'docs' | 'license' | 'downloads' | 'profit' | 'sync' | 'trends'>('overview');
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'refused'>('idle');
+  const [trendReport, setTrendReport] = useState<any>(null);
+  const [isLoadingTrends, setIsLoadingTrends] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'trends' && !trendReport) {
+      fetchTrends();
+    }
+  }, [activeTab]);
+
+  const fetchTrends = async () => {
+    setIsLoadingTrends(true);
+    try {
+      const { generateTrendReport } = await import('../services/geminiService');
+      const report = await generateTrendReport();
+      setTrendReport(report);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoadingTrends(false);
+    }
+  };
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([
     { id: '1', key: 'ca_live_9k2j...fLsk', created: '2026-04-20', status: 'active', usage: 1240 },
   ]);
 
   const user = auth.currentUser;
+
+  const handleFreeDownload = (url: string, name: string) => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${name}.png`;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const runConnectionTest = async () => {
     setTestStatus('testing');
@@ -86,10 +119,15 @@ export function Dashboard() {
 
       <div className="flex flex-col xl:flex-row gap-8">
         {/* Sidebar Nav */}
-        <div className="xl:w-64 flex xl:flex-col gap-2">
+        <div className="xl:w-64 flex xl:flex-wrap xl:flex-col gap-2">
           <TabButton active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={<Activity size={18}/>} label="Status_Overview" />
           <TabButton active={activeTab === 'api'} onClick={() => setActiveTab('api')} icon={<Key size={18}/>} label="API_Control" />
           <TabButton active={activeTab === 'docs'} onClick={() => setActiveTab('docs')} icon={<Code2 size={18}/>} label="Dev_Specs" />
+          <TabButton active={activeTab === 'license'} onClick={() => setActiveTab('license')} icon={<ShieldCheck size={18}/>} label="Legal_License" />
+          <TabButton active={activeTab === 'downloads'} onClick={() => setActiveTab('downloads')} icon={<Download size={18}/>} label="System_Asset_Downloads" />
+          <TabButton active={activeTab === 'trends'} onClick={() => setActiveTab('trends')} icon={<Sparkles size={18} className="text-pop-yellow"/>} label="Neural_Trend_Engine" />
+          <TabButton active={activeTab === 'profit'} onClick={() => setActiveTab('profit')} icon={<Activity size={18}/>} label="Wealth_Metrics" />
+          <TabButton active={activeTab === 'sync'} onClick={() => setActiveTab('sync')} icon={<RefreshCw size={18}/>} label="Archives_Sync" />
         </div>
 
         {/* Main Content */}
@@ -114,11 +152,21 @@ export function Dashboard() {
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-[10px] font-black uppercase text-gray-400">Access_Tier</span>
-                        <span className="px-2 py-0.5 bg-pop-yellow text-[10px] font-black brutal-border-sm">NEURAL_PRO</span>
+                        <div className="flex gap-1">
+                           <span className="px-2 py-0.5 bg-pop-pink text-[10px] font-black brutal-border-sm text-white">COMMERCIAL</span>
+                           <span className="px-2 py-0.5 bg-pop-yellow text-[10px] font-black brutal-border-sm">INDIVIDUAL</span>
+                        </div>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-black uppercase text-gray-400">Total_Generations</span>
-                        <span className="text-xs font-black italic underline decoration-pop-pink decoration-2">4,291_UNITS</span>
+                        <span className="text-[10px] font-black uppercase text-gray-400">Image_Credits</span>
+                        <span className="text-xs font-black italic underline decoration-pop-pink decoration-2">100 / 100_TOTAL</span>
+                      </div>
+                      <div className="flex justify-between items-center pt-2 border-t border-black/10">
+                        <span className="text-[10px] font-black uppercase text-pop-cyan">GIFT_COINS</span>
+                        <div className="flex items-center gap-2">
+                           <div className="w-4 h-4 bg-pop-cyan rounded-full brutal-border-sm" />
+                           <span className="text-sm font-black tracking-tighter">25_COINS</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -168,6 +216,233 @@ export function Dashboard() {
                            <span className="text-[10px] font-black opacity-40">2M_AGO</span>
                         </div>
                       ))}
+                   </div>
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'trends' && (
+              <motion.div
+                key="trends"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-8"
+              >
+                <div className="brutal-border p-8 bg-black text-white brutal-shadow-lg relative overflow-hidden">
+                   <div className="absolute top-0 right-0 w-64 h-64 bg-pop-cyan blur-[100px] opacity-10" />
+                   <div className="relative z-10 space-y-6">
+                      <div className="flex items-center gap-2 text-pop-yellow">
+                         <Sparkles size={24} />
+                         <span className="text-xs font-black uppercase tracking-widest">GEMINI_NEURAL_SIGHT_v4</span>
+                      </div>
+                      <h2 className="text-6xl font-black italic tracking-tighter uppercase leading-none">Neural_Trend_Forecast</h2>
+                      <p className="max-w-2xl text-sm font-bold uppercase opacity-80 leading-relaxed">
+                         Real-time market analysis synthesized from global marketplace flows, curator activity, and museum donation cycles.
+                      </p>
+                      <button 
+                        onClick={fetchTrends}
+                        disabled={isLoadingTrends}
+                        className="brutal-btn bg-white text-black px-8 py-3 flex items-center gap-2"
+                      >
+                         <RefreshCw className={cn(isLoadingTrends && "animate-spin")} size={18} />
+                         RESCAN_MARKET
+                      </button>
+                   </div>
+                </div>
+
+                {isLoadingTrends ? (
+                  <div className="h-64 flex flex-col items-center justify-center brutal-border border-dashed border-black">
+                     <RefreshCw className="animate-spin text-black mb-4" size={48} />
+                     <p className="text-xs font-black uppercase opacity-50 italic">SYNTHESIZING_GHOST_SIGNALS...</p>
+                  </div>
+                ) : trendReport ? (
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="brutal-border p-8 bg-white brutal-shadow-sm space-y-6">
+                         <h3 className="text-xl font-black italic border-b-2 border-black pb-2 uppercase">Hot_Style_Nodes</h3>
+                         <div className="flex flex-wrap gap-3">
+                            {trendReport.hotStyles.map((style: string) => (
+                              <div key={style} className="px-4 py-2 bg-pop-pink text-white brutal-border-sm text-xs font-black italic">
+                                 {style}
+                              </div>
+                            ))}
+                         </div>
+                         <div className="space-y-2">
+                            <p className="text-[10px] font-black uppercase text-pop-cyan">Market_Sentiment</p>
+                            <p className="text-2xl font-black italic tracking-tighter leading-none">{trendReport.marketSentiment}</p>
+                         </div>
+                      </div>
+
+                      <div className="brutal-border p-8 bg-pop-cyan brutal-shadow-sm space-y-6">
+                         <h3 className="text-xl font-black italic border-b-2 border-black pb-2 uppercase">Regional_Sync_Insights</h3>
+                         <div className="space-y-4">
+                            {trendReport.regionalTrends.map((region: any) => (
+                              <div key={region.region} className="p-4 bg-white/20 brutal-border-sm border-white">
+                                 <p className="text-[10px] font-black uppercase text-black/50">{region.region}</p>
+                                 <p className="text-sm font-black italic text-black">{region.styles.join(' + ')}</p>
+                              </div>
+                            ))}
+                         </div>
+                      </div>
+
+                      <div className="md:col-span-2 brutal-border p-8 bg-gray-100 italic">
+                         <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 bg-black text-white flex items-center justify-center brutal-border">
+                               <Cpu size={20} />
+                            </div>
+                            <h4 className="font-black uppercase">AI_ADVISORY_UPLINK</h4>
+                         </div>
+                         <p className="text-sm font-bold uppercase leading-loose opacity-70">
+                            "{trendReport.aiAnalysis}"
+                         </p>
+                      </div>
+                   </div>
+                ) : null}
+              </motion.div>
+            )}
+
+            {activeTab === 'profit' && (
+              <motion.div
+                key="profit"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-8"
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Revenue Chart Placeholder */}
+                  <div className="lg:col-span-2 brutal-border p-8 bg-white brutal-shadow-sm flex flex-col gap-6">
+                    <div className="flex justify-between items-center border-b-2 border-black pb-4">
+                       <h3 className="text-2xl font-black italic uppercase tracking-tighter">PROJECTED_NEURAL_REVENUE</h3>
+                       <div className="flex gap-2">
+                          <span className="bg-pop-green px-2 py-0.5 text-[9px] font-black uppercase">+42%_PROFIT</span>
+                       </div>
+                    </div>
+                    <div className="h-48 flex items-end gap-2 border-l-2 border-b-2 border-black p-4 bg-gray-50">
+                       {[60, 45, 80, 55, 90, 70, 100, 85].map((h, i) => (
+                         <div key={i} className="flex-1 bg-black brutal-border-sm hover:bg-pop-pink transition-colors" style={{ height: `${h}%` }} />
+                       ))}
+                    </div>
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                       <div className="p-4 bg-gray-100 brutal-border-sm">
+                          <p className="text-[10px] font-black uppercase opacity-50">Monthly_Recur</p>
+                          <p className="text-xl font-black">€42,500</p>
+                       </div>
+                       <div className="p-4 bg-gray-100 brutal-border-sm">
+                          <p className="text-[10px] font-black uppercase opacity-50">Credit_Sales</p>
+                          <p className="text-xl font-black">€12,900</p>
+                       </div>
+                       <div className="p-4 bg-gray-100 brutal-border-sm border-pop-cyan border-2">
+                          <p className="text-[10px] font-black uppercase text-pop-cyan">API_Royalties</p>
+                          <p className="text-xl font-black italic">€8,210</p>
+                       </div>
+                    </div>
+                  </div>
+
+                  {/* Neuro Shop UI */}
+                  <div className="brutal-border p-8 bg-pop-pink brutal-shadow-sm text-white flex flex-col gap-6">
+                    <h3 className="text-2xl font-black italic uppercase tracking-tighter">NEURO_TOP_UP</h3>
+                    <p className="text-xs font-bold uppercase leading-relaxed">
+                       Inject fresh coins into your neural stream.
+                    </p>
+                    
+                    <div className="space-y-3">
+                       <button className="w-full brutal-btn-sm bg-white text-black flex justify-between px-4 py-3 items-center group">
+                          <span className="font-black text-sm">50_COINS</span>
+                          <span className="bg-black text-white px-2 py-1 text-[10px] group-hover:bg-pop-cyan transition-colors">€15.00</span>
+                       </button>
+                       <button className="w-full brutal-btn-sm bg-black text-white flex justify-between px-4 py-3 items-center group">
+                          <span className="font-black text-sm italic">200_COINS</span>
+                          <span className="bg-white text-black px-2 py-1 text-[10px] group-hover:bg-pop-yellow transition-colors">€50.00</span>
+                       </button>
+                    </div>
+
+                    <div className="mt-auto pt-6 border-t border-white/20">
+                       <p className="text-[10px] font-black uppercase opacity-70">Commercial_Rate: 1_Coin = 0.25€</p>
+                       <p className="text-[10px] font-black uppercase text-white mt-1 underline decoration-2">Auto_Refill: DISABLED</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="brutal-border p-8 bg-white brutal-shadow-sm">
+                   <h4 className="text-xl font-black italic mb-6 border-b-2 border-black pb-2">Profit_Architecture_Specs</h4>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="space-y-2">
+                         <p className="text-xs font-black uppercase text-pop-cyan">01 / Marketplace_Dynamics (25%)</p>
+                         <p className="text-[10px] font-bold uppercase opacity-70 leading-relaxed">
+                            Every standard sale generates a 20% commission for your wallet, with an additional 5% automatically routed to museum archival funds for future neural scans.
+                         </p>
+                      </div>
+                      <div className="space-y-2">
+                         <p className="text-xs font-black uppercase text-pop-pink">02 / Neural_Auction_Stream (35%)</p>
+                         <p className="text-[10px] font-bold uppercase opacity-70 leading-relaxed">
+                            High-stakes auctions yield a premium 30% wallet commission. The 5% museum donation remains constant to ensure ethical data sourcing.
+                         </p>
+                      </div>
+                   </div>
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'sync' && (
+              <motion.div
+                key="sync"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-8"
+              >
+                <div className="brutal-border p-8 bg-white brutal-shadow-lg">
+                   <div className="flex items-center justify-between mb-8 border-b-4 border-black pb-4">
+                      <h2 className="text-3xl font-black italic uppercase tracking-tighter">External_Data_Connectors</h2>
+                      <span className="bg-pop-pink px-4 py-1 text-[10px] font-black brutal-border-sm text-white">EXTERNAL_UPLINK_READY</span>
+                   </div>
+
+                   <div className="space-y-6">
+                      <div className="brutal-border p-6 bg-gray-100 flex items-center justify-between group hover:bg-black hover:text-white transition-all cursor-pointer">
+                         <div className="flex items-center gap-6">
+                            <div className="w-16 h-16 bg-white brutal-border flex items-center justify-center">
+                               <ExternalLink size={32} className="text-black group-hover:text-pop-cyan transition-colors" />
+                            </div>
+                            <div>
+                               <h4 className="text-xl font-black italic leading-none">Google_Arts_&_Culture</h4>
+                               <p className="text-[10px] font-bold uppercase opacity-50 mt-2">Accessing ArtRemix Library Archives</p>
+                            </div>
+                         </div>
+                         <div className="flex items-center gap-4">
+                            <div className="text-right">
+                               <p className="text-[10px] font-black uppercase">Last_Sync: 0x01_A</p>
+                               <p className="text-[8px] font-bold text-pop-green">CONNECTED</p>
+                            </div>
+                            <button className="brutal-btn-sm bg-pop-green text-black group-hover:bg-white">REFRESH_SYNC</button>
+                         </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                         <div className="brutal-border p-6 bg-white">
+                            <h5 className="text-xs font-black uppercase border-b border-black pb-2 mb-4 italic">Available_Archives</h5>
+                            <div className="space-y-2">
+                               <div className="flex justify-between text-[10px] font-bold opacity-70">
+                                  <span>MET_MUSEUM_OBJ</span>
+                                  <span className="text-pop-green">ACTIVE</span>
+                                </div>
+                                <div className="flex justify-between text-[10px] font-bold opacity-70">
+                                  <span>RIJKS_COLLECTION</span>
+                                  <span className="text-pop-cyan">PENDING</span>
+                                </div>
+                                <div className="flex justify-between text-[10px] font-bold opacity-70">
+                                  <span>UFIZZI_GALLERY</span>
+                                  <span className="text-pop-pink">ENCRYPTED</span>
+                                </div>
+                            </div>
+                         </div>
+                         <div className="brutal-border p-6 bg-black text-white">
+                            <h5 className="text-xs font-black uppercase border-b border-white/20 pb-2 mb-4 italic">Neural_Scraping_Target</h5>
+                            <p className="text-[9px] uppercase leading-relaxed opacity-60">
+                               Auto-scanning library endpoints for historical metadata to feed the neural ghost. All data ingestion is governed by CYBERART_LICENSE_v1.
+                            </p>
+                         </div>
+                      </div>
                    </div>
                 </div>
               </motion.div>
@@ -248,6 +523,14 @@ export function Dashboard() {
                   <section className="space-y-6">
                     <div className="endpoint p-4 bg-gray-100 brutal-border-sm">
                        <div className="flex items-center gap-3 mb-2">
+                          <span className="bg-pop-cyan text-[10px] font-black px-2 py-0.5 brutal-border-sm uppercase">GET</span>
+                          <code className="text-xs font-black">/api/v1/remix/masterpiece</code>
+                       </div>
+                       <p className="text-[10px] font-bold uppercase opacity-70">Fetch authorized masterpieces from the synchronized archives.</p>
+                    </div>
+
+                    <div className="endpoint p-4 bg-gray-100 brutal-border-sm">
+                       <div className="flex items-center gap-3 mb-2">
                           <span className="bg-pop-green text-[10px] font-black px-2 py-0.5 brutal-border-sm uppercase">POST</span>
                           <code className="text-xs font-black">/api/v1/generate</code>
                        </div>
@@ -300,6 +583,130 @@ export function Dashboard() {
                        </p>
                     </div>
                   </section>
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'license' && (
+               <motion.div
+                key="license"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-8"
+              >
+                <div className="brutal-border p-10 bg-white brutal-shadow-lg max-w-4xl">
+                   <div className="flex items-center justify-between mb-10 border-b-4 border-black pb-4">
+                      <h2 className="text-4xl font-black italic uppercase tracking-tighter">CYBERART_LICENSE_v1</h2>
+                      <span className="bg-pop-green px-4 py-1 text-xs font-black brutal-border-sm">VALID_IDENTITY_PROTECTED</span>
+                   </div>
+
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                      <div className="space-y-6">
+                         <h3 className="text-xl font-black text-pop-pink underline underline-offset-4 tracking-tighter">INDIVIDUAL_LICENSE</h3>
+                         <p className="text-xs font-bold leading-relaxed uppercase opacity-80">
+                            Granted to single neural pilots. Allows for personal use, non-commercial redistribution, and individual portfolio display.
+                         </p>
+                         <ul className="text-[10px] font-black space-y-2 opacity-60">
+                            <li>• 10 NEURAL_UNITS / MO</li>
+                            <li>• PERSONAL_PORTFOLIO_ONLY</li>
+                            <li>• NO_RELIANCE_FOR_PROFIT</li>
+                            <li>• 5_GIFT_COINS_INIT</li>
+                         </ul>
+                      </div>
+
+                      <div className="space-y-6">
+                         <h3 className="text-xl font-black text-pop-cyan underline underline-offset-4 tracking-tighter">COMMERCIAL_STUDIO</h3>
+                         <p className="text-xs font-bold leading-relaxed uppercase opacity-80">
+                            Granted to registered design firms and teams. Allows for client delivery, commercial marketing, and for-profit usage of neural outputs.
+                         </p>
+                         <ul className="text-[10px] font-black space-y-2 opacity-60">
+                            <li>• 100 NEURAL_UNITS / MO</li>
+                            <li>• ROYALTY_FREE_REPRODUCTION</li>
+                            <li>• TEAM_MAIN_FRAME_ACCESS</li>
+                            <li>• 20_GIFT_COINS_BONUS</li>
+                         </ul>
+                      </div>
+                   </div>
+
+                   <div className="mt-12 pt-8 border-t-2 border-black italic">
+                      <p className="text-[9px] font-medium opacity-50 uppercase leading-loose">
+                         "BY UTILIZING THE CYBERART ENGINE, THE LICENSEE ACKNOWLEDGES THE CO-AUTHORSHIP OF THE NEURAL GHOST. ALL OUTPUTS ARE TRACEABLE VIA BLOCKCHAIN_ID."
+                      </p>
+                      <div className="mt-6 flex justify-between items-end">
+                         <div className="text-[10px] font-black uppercase">
+                            <p>Author: CyberArt_AI_Nodes</p>
+                            <p>Verifier: {user?.email || 'ANON_CLIENT'}</p>
+                         </div>
+                         <button 
+                           onClick={() => window.print()}
+                           className="brutal-btn-sm bg-black text-white hover:bg-pop-pink flex items-center gap-2"
+                         >
+                            <Download size={14} />
+                            PRINT_LICENSE_PDF
+                         </button>
+                      </div>
+                   </div>
+                </div>
+               </motion.div>
+            )}
+
+            {activeTab === 'downloads' && (
+              <motion.div
+                key="downloads"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-8"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="brutal-border p-6 bg-white brutal-shadow-sm flex flex-col gap-4">
+                     <div className="aspect-video bg-gray-100 brutal-border overflow-hidden">
+                        <img src="https://pollinations.ai/p/calibration%20image%20abstract%20geometric%20patterns%20blue%20and%20white%20pulse?width=512&height=512&seed=1&nologo=true" className="w-full h-full object-cover" alt="Asset 1" />
+                     </div>
+                     <div className="flex justify-between items-end">
+                        <div>
+                           <p className="text-[8px] font-black uppercase opacity-50">ASSET_ID: SYS_CAL_01</p>
+                           <h4 className="text-lg font-black uppercase tracking-tighter italic">Calibration_Node_01</h4>
+                        </div>
+                        <button 
+                          onClick={() => handleFreeDownload('https://pollinations.ai/p/calibration%20image%20abstract%20geometric%20patterns%20blue%20and%20white%20pulse?width=1024&height=1024&seed=1&nologo=true', 'sys_cal_01')}
+                          className="brutal-btn-sm bg-pop-cyan"
+                        >
+                           DOWNLOAD_FREE
+                        </button>
+                     </div>
+                  </div>
+
+                  <div className="brutal-border p-6 bg-white brutal-shadow-sm flex flex-col gap-4">
+                     <div className="aspect-video bg-gray-100 brutal-border overflow-hidden">
+                        <img src="https://pollinations.ai/p/calibration%20image%20pink%20fluid%20waves%20soft%20highlights?width=512&height=512&seed=2&nologo=true" className="w-full h-full object-cover" alt="Asset 2" />
+                     </div>
+                     <div className="flex justify-between items-end">
+                        <div>
+                           <p className="text-[8px] font-black uppercase opacity-50">ASSET_ID: SYS_CAL_02</p>
+                           <h4 className="text-lg font-black uppercase tracking-tighter italic">Calibration_Node_02</h4>
+                        </div>
+                        <button 
+                          onClick={() => handleFreeDownload('https://pollinations.ai/p/calibration%20image%20pink%20fluid%20waves%20soft%20highlights?width=1024&height=1024&seed=2&nologo=true', 'sys_cal_02')}
+                          className="brutal-btn-sm bg-pop-pink"
+                        >
+                           DOWNLOAD_FREE
+                        </button>
+                     </div>
+                  </div>
+                </div>
+
+                <div className="brutal-border p-8 bg-black text-white">
+                  <p className="text-xs font-bold uppercase opacity-70 mb-4 tracking-widest">System_Integrity_Check</p>
+                  <p className="text-[10px] uppercase leading-relaxed mb-6">
+                    Use these sample neural artifacts to test your local print pipeline or calibrate your 4K display. These assets are public domain under the CYBERART_v1 initiative.
+                  </p>
+                  <div className="flex gap-2">
+                     <div className="px-3 py-1 border border-white/30 text-[9px] font-black uppercase italic">PNG_FORMAT</div>
+                     <div className="px-3 py-1 border border-white/30 text-[9px] font-black uppercase italic">1024x1024_RES</div>
+                     <div className="px-3 py-1 border border-white/30 text-[9px] font-black uppercase italic">NO_POINT_COST</div>
+                  </div>
                 </div>
               </motion.div>
             )}

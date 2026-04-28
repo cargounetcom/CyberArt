@@ -1,9 +1,13 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Stage, Layer, Rect, Circle, Transformer, Text, Image as KonvaImage, Group, Line } from 'react-konva';
 import { motion, AnimatePresence } from 'motion/react';
-import { Trash2, Plus, MousePointer2, Type, Circle as CircleIcon, Square, Save, RefreshCw, Wand2, Fullscreen, Image as ImageIcon, Palette, Sparkles, Upload, PenTool } from 'lucide-react';
+import { Trash2, Plus, MousePointer2, Type, Circle as CircleIcon, Square, Save, RefreshCw, Wand2, Fullscreen, Image as ImageIcon, Palette, Sparkles, Upload, PenTool, Cpu, Monitor, Download, Zap } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import useImage from 'use-image';
+import { GoogleGenAI } from "@google/genai";
+import confetti from 'canvas-confetti';
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export interface ShapeProps {
   id: string;
@@ -20,6 +24,7 @@ export interface ShapeProps {
   depth?: number;
   tilt?: number; // angle in degrees for perspective shift
   isColoringPage?: boolean;
+  is4K?: boolean;
 }
 
 const URLLoadedImage = ({ shape, isSelected, onSelect, onChange, viewMode }: { 
@@ -29,7 +34,7 @@ const URLLoadedImage = ({ shape, isSelected, onSelect, onChange, viewMode }: {
   onChange: (newAttrs: any) => void,
   viewMode: '2d' | '3d'
 }) => {
-  const [img] = useImage(shape.imageSource || '');
+  const [img] = useImage(shape.imageSource || '', 'anonymous');
   const shapeRef = React.useRef<any>(null);
   const trRef = React.useRef<any>(null);
 
@@ -69,7 +74,7 @@ const URLLoadedImage = ({ shape, isSelected, onSelect, onChange, viewMode }: {
             x: node.x(),
             y: node.y(),
             width: Math.max(5, node.width() * scaleX),
-            height: Math.max(node.height() * scaleY),
+            height: Math.max(5, node.height() * scaleY),
           });
         }}
       />
@@ -102,11 +107,32 @@ interface CanvasControlProps {
   initialShapes?: ShapeProps[];
   onSave?: (shapes: ShapeProps[]) => void;
   isSaving?: boolean;
+  importTemplate?: { imageUrl: string, title: string, author: string } | null;
+  onClearTemplate?: () => void;
 }
 
-export function CanvasControl({ initialShapes, onSave, isSaving }: CanvasControlProps) {
+export function CanvasControl({ initialShapes, onSave, isSaving, importTemplate, onClearTemplate }: CanvasControlProps) {
   const [shapes, setShapes] = useState<ShapeProps[]>([]);
   const [selectedId, selectShape] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (importTemplate) {
+      const newShape: ShapeProps = {
+        id: `import-${Date.now()}`,
+        type: 'image',
+        x: 50,
+        y: 50,
+        width: 300,
+        height: 300,
+        imageSource: importTemplate.imageUrl,
+        fill: '#ffffff',
+        rotation: 0
+      };
+      setShapes(prev => [...prev, newShape]);
+      onClearTemplate?.();
+      confetti({ particleCount: 30, spread: 30 });
+    }
+  }, [importTemplate]);
   const stageRef = useRef<any>(null);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
@@ -114,6 +140,9 @@ export function CanvasControl({ initialShapes, onSave, isSaving }: CanvasControl
   const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d');
   const [aiPrompt, setAiPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isAssisting, setIsAssisting] = useState(false);
+  const [is4KRendering, setIs4KRendering] = useState(false);
+  const [renderProgress, setRenderProgress] = useState(0);
   const [selectedFill, setSelectedFill] = useState(COLORS[0]);
 
   useEffect(() => {
@@ -221,6 +250,48 @@ export function CanvasControl({ initialShapes, onSave, isSaving }: CanvasControl
       selectShape(id);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleNeuralAssist = async () => {
+    if (!aiPrompt.trim()) return;
+    setIsAssisting(true);
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: `Refine this art prompt for a high-end neural art engine. Keep it concise but add artistic depth, lighting details, and technical complexity. Original prompt: "${aiPrompt}"`,
+        config: {
+          systemInstruction: "You are an expert prompt engineer for neural art generators. Your output should be a single, enhanced prompt string without commentary.",
+        }
+      });
+      if (response.text) {
+        setAiPrompt(response.text.replace(/^"|"$/g, '').trim());
+        confetti({ particleCount: 30, colors: ['#FF00D6'], spread: 30 });
+      }
+    } catch (error) {
+      console.error("Neural Assist Error:", error);
+    } finally {
+      setIsAssisting(false);
+    }
+  };
+
+  const handle4KRender = async () => {
+    if (!selectedId) return;
+    setIs4KRendering(true);
+    setRenderProgress(0);
+    
+    // Simulated high-fidelity computation
+    const interval = setInterval(() => {
+      setRenderProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setIs4KRendering(false);
+          updateShape(selectedId, { is4K: true });
+          confetti({ particleCount: 150, spread: 70, colors: ['#00FF00', '#FFFFFF'] });
+          return 100;
+        }
+        return prev + 2;
+      });
+    }, 50);
   };
 
   const generateAIImage = async () => {
@@ -471,14 +542,24 @@ export function CanvasControl({ initialShapes, onSave, isSaving }: CanvasControl
               ))}
             </div>
             <div className="flex items-center gap-2">
-              <input 
-                type="text"
-                value={aiPrompt}
-                onChange={(e) => setAiPrompt(e.target.value)}
-                placeholder="GENERATE_MAGIC..."
-                className="bg-white border-2 border-black px-3 py-2 text-[10px] font-black uppercase placeholder:opacity-30 outline-none w-48 brutal-shadow-sm focus:bg-pop-yellow transition-colors"
-                onKeyDown={(e) => e.key === 'Enter' && generateAIImage()}
-              />
+              <div className="relative group">
+                <input 
+                  type="text"
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                  placeholder="GENERATE_MAGIC..."
+                  className="bg-white border-2 border-black px-3 py-2 text-[10px] font-black uppercase placeholder:opacity-30 outline-none w-48 brutal-shadow-sm focus:bg-pop-yellow transition-colors pr-8"
+                  onKeyDown={(e) => e.key === 'Enter' && generateAIImage()}
+                />
+                <button
+                  onClick={handleNeuralAssist}
+                  disabled={isAssisting || !aiPrompt}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-pop-pink hover:scale-110 active:scale-95 transition-all disabled:opacity-30"
+                  title="Neural Prompt Assistant"
+                >
+                  {isAssisting ? <RefreshCw size={12} className="animate-spin" /> : <Cpu size={14} />}
+                </button>
+              </div>
               <button
                 onClick={generateAIImage}
                 disabled={isGenerating || !aiPrompt}
@@ -504,6 +585,28 @@ export function CanvasControl({ initialShapes, onSave, isSaving }: CanvasControl
             <Fullscreen size={20} />
             PRINT/EXPORT
           </button>
+
+          {selectedId && (
+            <button
+               onClick={handle4KRender}
+               disabled={is4KRendering}
+               className={cn(
+                 "brutal-btn flex items-center gap-2 transition-all overflow-hidden relative",
+                 is4KRendering ? "bg-black text-white" : "bg-pop-yellow"
+               )}
+            >
+               {is4KRendering && (
+                 <motion.div 
+                   className="absolute bottom-0 left-0 h-1 bg-pop-green"
+                   initial={{ width: 0 }}
+                   animate={{ width: `${renderProgress}%` }}
+                 />
+               )}
+               <Monitor size={20} />
+               {is4KRendering ? `RENDERING_${renderProgress}%` : 'RENDER_4K'}
+            </button>
+          )}
+
           <div className="flex items-center gap-1 border-2 border-black bg-white p-1 brutal-shadow-sm">
             <button 
               onClick={() => setViewMode('2d')}
@@ -690,6 +793,12 @@ export function CanvasControl({ initialShapes, onSave, isSaving }: CanvasControl
                         stroke="black" 
                         strokeWidth={2}
                       />
+                      {shape.is4K && (
+                        <Group x={w - 25} y={5}>
+                           <Rect width={20} height={10} fill="#00FF00" stroke="black" strokeWidth={1} />
+                           <Text text="4K" fontSize={6} fontStyle="bold" x={6} y={2.5} fill="black" />
+                        </Group>
+                      )}
                       {isSelected && (
                         <Transformer
                           anchorSize={6}
@@ -750,6 +859,12 @@ export function CanvasControl({ initialShapes, onSave, isSaving }: CanvasControl
                         stroke="black" 
                         strokeWidth={2} 
                       />
+                      {shape.is4K && (
+                        <Group x={r/2} y={-r/2}>
+                           <Rect width={20} height={10} fill="#00FF00" stroke="black" strokeWidth={1} />
+                           <Text text="4K" fontSize={6} fontStyle="bold" x={6} y={2.5} fill="black" />
+                        </Group>
+                      )}
                       {isSelected && (
                         <Transformer
                           anchorSize={6}

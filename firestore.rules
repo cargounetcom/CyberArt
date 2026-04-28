@@ -26,6 +26,20 @@ service cloud.firestore {
              data.updatedAt == request.time;
     }
 
+    function isValidMarketplaceItem(data) {
+      return data.title is string && data.title.size() <= 100 &&
+             data.author is string && data.author.size() <= 100 &&
+             data.imageUrl is string && data.imageUrl.size() <= 1000 &&
+             data.ownerId == request.auth.uid &&
+             data.itemType in ['sale', 'auction'];
+    }
+
+    function isValidLiveEvent(data) {
+      return data.type in ['SALE', 'REMIX', 'LIKE', 'MINT'] &&
+             data.message is string && data.message.size() <= 256 &&
+             data.timestamp == request.time;
+    }
+
     match /canvases/{canvasId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
@@ -36,6 +50,17 @@ service cloud.firestore {
                       request.resource.data.shapes is string && request.resource.data.shapes.size() <= 1000000 &&
                       request.resource.data.updatedAt == request.time;
       allow delete: if isOwner(resource.data.ownerId);
+    }
+
+    match /marketplace/{itemId} {
+      allow read: if true; 
+      allow create: if isSignedIn() && isValidMarketplaceItem(request.resource.data);
+      allow update: if isSignedIn();
+    }
+
+    match /live_events/{eventId} {
+      allow read: if true;
+      allow create: if isSignedIn() && isValidLiveEvent(request.resource.data);
     }
   }
 }

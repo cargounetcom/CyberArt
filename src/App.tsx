@@ -21,13 +21,16 @@ import { Collection } from './components/Collection';
 import { DirectorMode } from './components/Director';
 import { Gallery } from './components/Gallery';
 import { Dashboard } from './components/Dashboard';
+import { Marketplace } from './components/Marketplace';
+import { Museum } from './components/Museum';
+import { ArchiveUplink } from './components/ArchiveUplink';
 import { cn } from './lib/utils';
 import confetti from 'canvas-confetti';
 import { auth, signIn, db, handleFirestoreError, OperationType } from './lib/firebase';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { addDoc, collection, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
 
-type View = 'canvas' | 'pricing' | 'about' | 'collection' | 'gallery' | 'director' | 'dashboard';
+type View = 'canvas' | 'pricing' | 'about' | 'collection' | 'gallery' | 'director' | 'dashboard' | 'marketplace' | 'museum' | 'uplink';
 
 export default function App() {
   const [view, setView] = useState<View>('canvas');
@@ -36,6 +39,7 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [currentCanvas, setCurrentCanvas] = useState<{ id?: string, name: string, shapes: ShapeProps[] } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [importTemplate, setImportTemplate] = useState<any>(null);
 
   useEffect(() => {
     return onAuthStateChanged(auth, (u) => {
@@ -134,6 +138,9 @@ export default function App() {
           <button onClick={() => setView('canvas')} className={cn("hover:underline decoration-4 decoration-pop-pink transition-all", view === 'canvas' && "underline")}>Studio</button>
           <button onClick={() => setView('director')} className={cn("hover:underline decoration-4 decoration-pop-cyan transition-all", view === 'director' && "underline text-pop-cyan")}>Director</button>
           <button onClick={() => setView('dashboard')} className={cn("hover:underline decoration-4 decoration-pop-yellow transition-all", view === 'dashboard' && "underline text-pop-yellow")}>Dashboard</button>
+          <button onClick={() => setView('marketplace')} className={cn("hover:underline decoration-4 decoration-pop-green transition-all", view === 'marketplace' && "underline text-pop-green")}>Marketplace</button>
+          <button onClick={() => setView('museum')} className={cn("hover:underline decoration-4 decoration-pop-cyan transition-all", view === 'museum' && "underline text-pop-cyan")}>Museum</button>
+          <button onClick={() => setView('uplink')} className={cn("hover:underline decoration-4 decoration-pop-pink transition-all", view === 'uplink' && "underline text-pop-pink")}>Uplink</button>
           <button onClick={() => setView('gallery')} className={cn("hover:underline decoration-4 decoration-pop-green transition-all", view === 'gallery' && "underline")}>Gallery</button>
           <button onClick={() => setView('collection')} className={cn("hover:underline decoration-4 decoration-pop-cyan transition-all", view === 'collection' && "underline")}>Collection</button>
           <button onClick={() => setView('pricing')} className={cn("hover:underline decoration-4 decoration-pop-yellow transition-all", view === 'pricing' && "underline")}>Vault</button>
@@ -193,10 +200,17 @@ export default function App() {
              <LayoutDashboard size={20} />
           </button>
           <button 
+             onClick={() => setView('marketplace')}
+             className={cn("w-12 h-12 bg-white border-2 border-black brutal-shadow-sm flex items-center justify-center hover:bg-pop-yellow transition-all", view === 'marketplace' && "bg-pop-yellow -translate-y-0.5 shadow-none")}
+             title="Live Marketplace"
+          >
+             <CreditCard size={20} />
+          </button>
+          <button 
              onClick={() => setView('pricing')}
              className={cn("w-12 h-12 bg-white border-2 border-black brutal-shadow-sm flex items-center justify-center hover:bg-pop-yellow transition-all", view === 'pricing' && "bg-pop-yellow -translate-y-0.5 shadow-none")}
           >
-             <CreditCard size={20} />
+             <Zap size={20} />
           </button>
           
           <div className="mt-auto mb-4 text-center">
@@ -221,6 +235,8 @@ export default function App() {
                   initialShapes={currentCanvas?.shapes} 
                   onSave={handleSave}
                   isSaving={isSaving}
+                  importTemplate={importTemplate}
+                  onClearTemplate={() => setImportTemplate(null)}
                 />
               </motion.div>
             )}
@@ -245,6 +261,47 @@ export default function App() {
                 exit={{ opacity: 0, y: -20 }}
               >
                 <Dashboard />
+              </motion.div>
+            )}
+
+            {view === 'marketplace' && (
+              <motion.div
+                key="marketplace"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.05 }}
+              >
+                <Marketplace />
+              </motion.div>
+            )}
+
+            {view === 'museum' && (
+              <motion.div
+                key="museum"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+              >
+                <Museum />
+              </motion.div>
+            )}
+
+            {view === 'uplink' && (
+              <motion.div
+                key="uplink"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+              >
+                <ArchiveUplink onImport={(item) => {
+                  setImportTemplate({
+                    imageUrl: item.thumbnail,
+                    title: item.title,
+                    author: item.author
+                  });
+                  setView('canvas');
+                  confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#00D1FF', '#FF00D6'] });
+                }} />
               </motion.div>
             )}
 

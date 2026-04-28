@@ -5,26 +5,26 @@ import { cn } from '@/src/lib/utils';
 
 const PLANS = [
   {
-    name: 'Cyberspace Init',
-    price: '$0',
-    description: 'Perfect for digital drifters.',
-    features: ['3 Saved Canvases', 'Basic Neon Shapes', 'Standard Cyber Suggestions'],
-    accent: '#1A1A1A',
+    name: 'Individual_License',
+    price: '10€',
+    description: '1 License for 10 Neural Images.',
+    features: ['10_IMAGE_CREDITS', '5_GIFT_COINS_BONUS', 'Individual Usage', 'Standard Support'],
+    accent: '#FF00FF',
   },
   {
-    name: 'Artisan Glitch',
-    price: '$12',
-    description: 'For dedicated digital explorers.',
-    features: ['Unlimited Canvases', 'Glitch Textures', 'Priority "Fool" Logic', 'Export to SVG'],
+    name: 'Commercial_Studio',
+    price: '100€',
+    description: '1 License for 100 Neural Images.',
+    features: ['100_IMAGE_CREDITS', '20_GIFT_COINS_BONUS', 'Commercial Usage License', 'Design Studio & Teams Access', 'API Management'],
     popular: true,
     accent: '#00D1FF',
   },
   {
-    name: 'Mainframe Master',
-    price: '$29',
-    description: 'Enterprise grade cyber-art mastery.',
-    features: ['Collaborative Rooms', 'Custom Neon Palettes', 'API Access', '24/7 Tech Support'],
-    accent: '#FF1D1D',
+    name: 'Academic_Hub',
+    price: 'STUDENT',
+    description: 'Special tier for Schools & Universities.',
+    features: ['Bulk Student Accounts', 'Multi-User Workspace', 'Neural Education Tools', 'University Portal Connect'],
+    accent: '#FFDE03',
   }
 ];
 
@@ -77,9 +77,17 @@ export function PlanSubscription() {
             </ul>
 
             <button
-              className="brutal-btn w-full py-4 text-center bg-black text-white hover:bg-pop-pink hover:text-white"
+              onClick={() => {
+                if (plan.name === 'Academic_Hub') {
+                  window.location.href = `mailto:ellanovachenko@gmail.com?subject=Academic License Inquiry - CYBERART&body=Hello, I am interested in the Academic Hub plan for my institution...`;
+                }
+              }}
+              className={cn(
+                "brutal-btn w-full py-4 text-center bg-black text-white transition-colors",
+                plan.name === 'Academic_Hub' ? "hover:bg-pop-green" : "hover:bg-pop-pink"
+              )}
             >
-              INITIALIZE_SYNC
+              {plan.name === 'Academic_Hub' ? 'VERIFY_ACADEMIC_ID' : 'INITIALIZE_SYNC'}
             </button>
           </motion.div>
         ))}

@@ -13,12 +13,52 @@
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["name", "shapes", "ownerId", "createdAt", "updatedAt"]
+    },
+    "MarketplaceItem": {
+      "title": "Marketplace Item",
+      "description": "An item listed for sale or auction.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "author": { "type": "string" },
+        "price": { "type": "number" },
+        "imageUrl": { "type": "string" },
+        "category": { "type": "string" },
+        "isSold": { "type": "boolean" },
+        "ownerId": { "type": "string" },
+        "itemType": { "type": "string" },
+        "currentBid": { "type": "number" },
+        "bidCount": { "type": "number" },
+        "endsAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "author", "imageUrl", "ownerId", "itemType"]
+    },
+    "LiveEvent": {
+      "title": "Live Event",
+      "description": "A notification event for the feed.",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string" },
+        "message": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "userId": { "type": "string" },
+        "entityId": { "type": "string" }
+      },
+      "required": ["type", "message", "timestamp"]
     }
   },
   "firestore": {
     "canvases/{canvasId}": {
       "schema": "Canvas",
       "description": "Stored canvases."
+    },
+    "marketplace/{itemId}": {
+      "schema": "MarketplaceItem",
+      "description": "Global marketplace items."
+    },
+    "live_events/{eventId}": {
+      "schema": "LiveEvent",
+      "description": "Real-time activity feed."
     }
   }
 }

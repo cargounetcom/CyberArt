@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { collection, query, where, getDocs, orderBy, deleteDoc, doc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '@/src/lib/firebase';
 import { motion } from 'motion/react';
-import { Trash2, Edit3, Layers, RefreshCw } from 'lucide-react';
+import { Trash2, Edit3, Layers, RefreshCw, ShoppingCart, Check, FileText } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
+import confetti from 'canvas-confetti';
+import { generateCertificate } from '@/src/lib/certificate';
 
 interface CanvasData {
   id: string;
@@ -22,6 +24,17 @@ interface CollectionProps {
 export function Collection({ userId, onEdit, onRemix }: CollectionProps) {
   const [canvases, setCanvases] = useState<CanvasData[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [listedIds, setListedIds] = useState<Set<string>>(new Set());
+
+  const handleList = (id: string) => {
+    setListedIds(prev => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+    confetti({ particleCount: 100, colors: ['#FF00D6', '#00D1FF'], origin: { y: 0.7 } });
+  };
 
   const fetchCanvases = async () => {
     setLoading(true);
@@ -114,6 +127,30 @@ export function Collection({ userId, onEdit, onRemix }: CollectionProps) {
                       className="brutal-btn bg-pop-pink text-white text-[10px]"
                     >
                       REMIX
+                    </button>
+                    <button
+                      onClick={() => handleList(canvas.id)}
+                      disabled={listedIds.has(canvas.id)}
+                      className={cn(
+                        "brutal-btn text-[10px]",
+                        listedIds.has(canvas.id) ? "bg-pop-green text-black" : "bg-black text-white hover:bg-pop-yellow hover:text-black"
+                      )}
+                    >
+                      {listedIds.has(canvas.id) ? <Check size={14}/> : <ShoppingCart size={14}/>}
+                      {listedIds.has(canvas.id) ? 'LISTED' : 'LIST'}
+                    </button>
+                    <button
+                      onClick={() => generateCertificate({
+                        id: canvas.id,
+                        title: canvas.name,
+                        author: 'CURRENT_COLLECTOR',
+                        date: new Date(canvas.createdAt?.seconds * 1000 || Date.now()).toLocaleDateString()
+                      })}
+                      className="brutal-btn bg-white text-[10px] flex items-center gap-1"
+                      title="Download Provenance"
+                    >
+                      <FileText size={14}/>
+                      CERT
                     </button>
                   </div>
                   <button

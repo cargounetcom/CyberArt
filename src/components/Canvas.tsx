@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Stage, Layer, Rect, Circle, Transformer, Text, Image as KonvaImage, Group, Line } from 'react-konva';
 import { motion, AnimatePresence } from 'motion/react';
-import { Trash2, Plus, MousePointer2, Type, Circle as CircleIcon, Square, Save, RefreshCw, Wand2, Fullscreen, Image as ImageIcon } from 'lucide-react';
+import { Trash2, Plus, MousePointer2, Type, Circle as CircleIcon, Square, Save, RefreshCw, Wand2, Fullscreen, Image as ImageIcon, Palette, Sparkles, Upload, PenTool } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import useImage from 'use-image';
 
@@ -19,6 +19,7 @@ export interface ShapeProps {
   imageSource?: string;
   depth?: number;
   tilt?: number; // angle in degrees for perspective shift
+  isColoringPage?: boolean;
 }
 
 const URLLoadedImage = ({ shape, isSelected, onSelect, onChange, viewMode }: { 
@@ -113,6 +114,7 @@ export function CanvasControl({ initialShapes, onSave, isSaving }: CanvasControl
   const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d');
   const [aiPrompt, setAiPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedFill, setSelectedFill] = useState(COLORS[0]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -169,7 +171,7 @@ export function CanvasControl({ initialShapes, onSave, isSaving }: CanvasControl
       type,
       x: containerSize.width / 2 - 50,
       y: containerSize.height / 2 - 50,
-      fill: COLORS[Math.floor(Math.random() * COLORS.length)],
+      fill: selectedFill,
       rotation: 0,
       ...(type === 'rect' && { width: 100, height: 100, depth: 0, tilt: 45 }),
       ...(type === 'circle' && { radius: 50, depth: 0, tilt: 45 }),
@@ -180,20 +182,85 @@ export function CanvasControl({ initialShapes, onSave, isSaving }: CanvasControl
     selectShape(id);
   };
 
+  const [aiStyle, setAiStyle] = useState('CYBER_BRUTALISM');
+
+  const STYLES = [
+    { id: 'CYBER_BRUTALISM', label: 'CYBER' },
+    { id: 'GHOSTLY_GOTHIC', label: 'GHOST' },
+    { id: 'NORDIC_FROST', label: 'NORDIC' },
+    { id: 'PUNK_ANARCHY', label: 'PUNK' },
+    { id: 'ABSTRACTIONISM', label: 'ABSTR' },
+    { id: 'TAIWING_FLUID', label: 'TAIWING' },
+    { id: 'IMPRESSIONISM', label: 'IMPRESS' },
+    { id: 'SURREALISM', label: 'SURREAL' },
+    { id: 'COLORING_PAGE', label: 'COLOR' },
+  ];
+
+  const onFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const url = event.target?.result as string;
+      const id = `upload-${Date.now()}`;
+      const newShape: ShapeProps = {
+        id,
+        type: 'image',
+        x: 100,
+        y: 100,
+        width: 300,
+        height: 300,
+        fill: 'transparent',
+        rotation: 0,
+        imageSource: url,
+        depth: 0,
+        tilt: 45
+      };
+      setShapes([...shapes, newShape]);
+      selectShape(id);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const generateAIImage = async () => {
     if (!aiPrompt.trim()) return;
     setIsGenerating(true);
+
     try {
+      const styleContext = {
+        CYBER_BRUTALISM: "Neo-brutalist tech art, vibrant neon, grid textures.",
+        GHOSTLY_GOTHIC: "Haunting gothic atmosphere, ghostly figures, dark lace, Victorian horror, ethereal smoke.",
+        NORDIC_FROST: "Nordic minimalism, icy blues, snowy landscapes, runic symbols, cold light.",
+        PUNK_ANARCHY: "Punk rock collage, zine aesthetic, high contrast, gritty textures, safety pins and leather.",
+        ABSTRACTIONISM: "Abstract expressionism, focal points, geometric chaos, textured brushwork, bold colors.",
+        TAIWING_FLUID: "Abstract flowing composition in Taiwing style, soft watercolor gradients, ethereal liquid shapes, smooth transitions between pastel turquoise and deep violet tones, aesthetic fluid art, minimalist.",
+        IMPRESSIONISM: "Impressionist oil painting style, visible brushstrokes, emphasis on light and its changing qualities, ordinary subject matter, movement as a crucial element, vibrant colors.",
+        SURREALISM: "Surrealist masterpiece, dreamlike scenes, symbolic imagery, illogical juxtapositions, bizarre subconscious elements, Dali-inspired melting shapes.",
+        COLORING_PAGE: "Black and white line art coloring page, abstract contour drawing of fluid waves, clean bold lines, no shading, no numbers, white background, high contrast."
+      }[aiStyle as keyof typeof styleContext];
+
       const res = await fetch('/api/refine-prompt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: aiPrompt })
+        body: JSON.stringify({ prompt: `STYLE: ${styleContext}. SUBJECT: ${aiPrompt}. Format for high-quality printing.` })
       });
       const data = await res.json();
       const refinedPrompt = data.refinedPrompt || aiPrompt;
-
+      
       const seed = Math.floor(Math.random() * 1000000);
-      const imageUrl = `https://pollinations.ai/p/${encodeURIComponent(refinedPrompt)}?width=1024&height=1024&seed=${seed}&nologo=true`;
+      
+      // Determine dimensions based on aspect ratio
+      const dims = {
+        square: { w: 1024, h: 1024 },
+        a4: { w: 724, h: 1024 },
+        poster: { w: 680, h: 1024 },
+        tiktok: { w: 576, h: 1024 },
+        video: { w: 1024, h: 576 },
+        banner: { w: 1024, h: 256 }
+      }[aspectRatio] || { w: 1024, h: 1024 };
+
+      const imageUrl = `https://pollinations.ai/p/${encodeURIComponent(refinedPrompt)}?width=${dims.w}&height=${dims.h}&seed=${seed}&nologo=true`;
       
       const id = `ai-${Date.now()}`;
       const newShape: ShapeProps = {
@@ -202,10 +269,13 @@ export function CanvasControl({ initialShapes, onSave, isSaving }: CanvasControl
         x: containerSize.width / 2 - 150,
         y: containerSize.height / 2 - 150,
         width: 300,
-        height: 300,
+        height: 300 * (dims.h / dims.w),
         fill: 'transparent',
         rotation: 0,
-        imageSource: imageUrl
+        imageSource: imageUrl,
+        depth: 0,
+        tilt: 45,
+        isColoringPage: aiStyle === 'COLORING_PAGE'
       };
 
       setShapes([...shapes, newShape]);
@@ -218,11 +288,54 @@ export function CanvasControl({ initialShapes, onSave, isSaving }: CanvasControl
     }
   };
 
+  const downloadCanvas = (scale: number = 1) => {
+    if (!stageRef.current) return;
+    
+    // Select the stage and ensure everything is visible
+    const stage = stageRef.current;
+    
+    // Create a temporary link and trigger the download
+    try {
+      // Use toBlob for better quality and memory handling on some browsers
+      stage.toBlob({
+        callback: (blob: Blob | null) => {
+          if (!blob) return;
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.download = `cyberart-export-${scale}x-${Date.now()}.png`;
+          link.href = url;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        },
+        pixelRatio: scale,
+        mimeType: 'image/png',
+        quality: 1,
+      });
+    } catch (err) {
+      // Fallback to toDataURL if toBlob fails
+      const uri = stage.toDataURL({ pixelRatio: scale });
+      const link = document.createElement('a');
+      link.download = `cyberart-export-${scale}x-${Date.now()}.png`;
+      link.href = uri;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
   const updateShape = (id: string, attrs: Partial<ShapeProps>) => {
     setShapes(prev => prev.map(s => s.id === id ? { ...s, ...attrs } : s));
   };
 
   const selectedShape = shapes.find(s => s.id === selectedId);
+
+  useEffect(() => {
+    if (selectedShape) {
+      setSelectedFill(selectedShape.fill);
+    }
+  }, [selectedId, selectedShape]);
 
   const getExtrusionOffsets = (depth: number = 0, tilt: number = 45) => {
     const rad = (tilt * Math.PI) / 180;
@@ -303,28 +416,94 @@ export function CanvasControl({ initialShapes, onSave, isSaving }: CanvasControl
           >
             <Type size={20} />
           </button>
+
+          <label className="w-10 h-10 bg-white border-2 border-black brutal-shadow-sm flex items-center justify-center hover:bg-pop-pink hover:translate-y-0.5 hover:shadow-none transition-all cursor-pointer">
+            <input type="file" className="hidden" onChange={onFileUpload} accept="image/*" />
+            <Upload size={20} />
+          </label>
+
+          <div className="flex items-center gap-1 bg-white p-1 brutal-border brutal-shadow-sm ml-2">
+            {COLORS.map(c => (
+              <button 
+                key={c}
+                onClick={() => {
+                  setSelectedFill(c);
+                  if (selectedId) updateShape(selectedId, { fill: c });
+                }}
+                className={cn(
+                  "w-6 h-6 border border-black transition-all hover:scale-110",
+                  selectedFill === c ? "border-2 scale-110" : "opacity-80"
+                )}
+                style={{ backgroundColor: c }}
+                title={`Color: ${c}`}
+              />
+            ))}
+            <div className="relative w-6 h-6 border border-black brutal-shadow-sm overflow-hidden flex items-center justify-center bg-white group hover:scale-110 transition-transform">
+              <Palette size={12} className="absolute pointer-events-none z-10" />
+              <input 
+                type="color" 
+                value={selectedFill} 
+                onChange={(e) => {
+                  const color = e.target.value;
+                  setSelectedFill(color);
+                  if (selectedId) updateShape(selectedId, { fill: color });
+                }}
+                className="w-12 h-12 absolute -top-3 -left-3 cursor-pointer opacity-0"
+                title="Custom Color"
+              />
+              <div style={{ backgroundColor: selectedFill }} className="w-full h-full" />
+            </div>
+          </div>
           
-          <div className="flex items-center gap-2 border-l-2 border-black pl-4 ml-2">
-            <input 
-              type="text"
-              value={aiPrompt}
-              onChange={(e) => setAiPrompt(e.target.value)}
-              placeholder="GENERATE_PROMPT..."
-              className="bg-white border-2 border-black px-3 py-2 text-[10px] font-black uppercase placeholder:opacity-30 outline-none w-48 brutal-shadow-sm focus:bg-pop-yellow transition-colors"
-              onKeyDown={(e) => e.key === 'Enter' && generateAIImage()}
-            />
-            <button
-              onClick={generateAIImage}
-              disabled={isGenerating || !aiPrompt}
-              className="w-10 h-10 bg-pop-green border-2 border-black brutal-shadow-sm flex items-center justify-center hover:translate-y-0.5 hover:shadow-none transition-all disabled:opacity-50"
-              title="Generate AI Masterpiece"
-            >
-              {isGenerating ? <RefreshCw className="animate-spin" size={20} /> : <Wand2 size={20} />}
-            </button>
+          <div className="flex flex-col gap-1 border-l-2 border-black pl-4 ml-2">
+            <div className="flex gap-1">
+              {STYLES.map(s => (
+                <button
+                  key={s.id}
+                  onClick={() => setAiStyle(s.id)}
+                  className={cn(
+                    "px-2 py-1 text-[8px] font-black uppercase brutal-border-sm transition-all",
+                    aiStyle === s.id ? "bg-black text-white" : "bg-white hover:bg-gray-100"
+                  )}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-2">
+              <input 
+                type="text"
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                placeholder="GENERATE_MAGIC..."
+                className="bg-white border-2 border-black px-3 py-2 text-[10px] font-black uppercase placeholder:opacity-30 outline-none w-48 brutal-shadow-sm focus:bg-pop-yellow transition-colors"
+                onKeyDown={(e) => e.key === 'Enter' && generateAIImage()}
+              />
+              <button
+                onClick={generateAIImage}
+                disabled={isGenerating || !aiPrompt}
+                className="w-10 h-10 bg-pop-green border-2 border-black brutal-shadow-sm flex items-center justify-center hover:translate-y-0.5 hover:shadow-none transition-all disabled:opacity-50"
+                title="Generate AI Masterpiece"
+              >
+                {isGenerating ? <RefreshCw className="animate-spin" size={20} /> : <Sparkles size={20} />}
+              </button>
+            </div>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1 bg-white brutal-border brutal-shadow-sm p-1">
+            <button onClick={() => downloadCanvas(1)} className="px-2 py-1 text-[8px] font-black uppercase hover:bg-pop-pink">1x</button>
+            <button onClick={() => downloadCanvas(2)} className="px-2 py-1 text-[8px] font-black uppercase hover:bg-pop-pink">2x</button>
+            <button onClick={() => downloadCanvas(4)} className="px-2 py-1 text-[8px] font-black uppercase hover:bg-pop-pink">4x</button>
+          </div>
+          <button 
+            onClick={() => downloadCanvas(2)}
+            className="brutal-btn bg-pop-cyan flex items-center gap-2"
+          >
+            <Fullscreen size={20} />
+            PRINT/EXPORT
+          </button>
           <div className="flex items-center gap-1 border-2 border-black bg-white p-1 brutal-shadow-sm">
             <button 
               onClick={() => setViewMode('2d')}
@@ -436,6 +615,13 @@ export function CanvasControl({ initialShapes, onSave, isSaving }: CanvasControl
             ref={stageRef}
           >
             <Layer>
+              {/* Background Plate for Exports */}
+              <Rect 
+                width={containerSize.width} 
+                height={containerSize.height} 
+                fill="white" 
+                listening={false} 
+              />
               {shapes.map((shape) => {
                 const isSelected = shape.id === selectedId;
                 const props = {

@@ -22,19 +22,19 @@ body {
   @apply font-sans min-h-screen text-black;
 }
 
-.brutal-border {
+@utility brutal-border {
   @apply border-4 border-black;
 }
 
-.brutal-shadow {
+@utility brutal-shadow {
   box-shadow: 4px 4px 0 0 rgba(0, 0, 0, 1);
 }
 
-.brutal-shadow-lg {
+@utility brutal-shadow-lg {
   box-shadow: 8px 8px 0 0 rgba(0, 0, 0, 1);
 }
 
-.brutal-shadow-sm {
+@utility brutal-shadow-sm {
   box-shadow: 2px 2px 0 0 rgba(0, 0, 0, 1);
 }
 

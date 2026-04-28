@@ -12,19 +12,22 @@ import {
   Layers,
   LogIn,
   Image as ImageIcon,
-  Film
+  Film,
+  LayoutDashboard
 } from 'lucide-react';
 import { CanvasControl, ShapeProps } from './components/Canvas';
 import { PlanSubscription } from './components/PlanSubscription';
 import { Collection } from './components/Collection';
 import { DirectorMode } from './components/Director';
+import { Gallery } from './components/Gallery';
+import { Dashboard } from './components/Dashboard';
 import { cn } from './lib/utils';
 import confetti from 'canvas-confetti';
 import { auth, signIn, db, handleFirestoreError, OperationType } from './lib/firebase';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { addDoc, collection, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
 
-type View = 'canvas' | 'pricing' | 'about' | 'collection' | 'gallery' | 'director';
+type View = 'canvas' | 'pricing' | 'about' | 'collection' | 'gallery' | 'director' | 'dashboard';
 
 export default function App() {
   const [view, setView] = useState<View>('canvas');
@@ -130,6 +133,7 @@ export default function App() {
         <nav className="hidden md:flex gap-6 font-black uppercase text-xs">
           <button onClick={() => setView('canvas')} className={cn("hover:underline decoration-4 decoration-pop-pink transition-all", view === 'canvas' && "underline")}>Studio</button>
           <button onClick={() => setView('director')} className={cn("hover:underline decoration-4 decoration-pop-cyan transition-all", view === 'director' && "underline text-pop-cyan")}>Director</button>
+          <button onClick={() => setView('dashboard')} className={cn("hover:underline decoration-4 decoration-pop-yellow transition-all", view === 'dashboard' && "underline text-pop-yellow")}>Dashboard</button>
           <button onClick={() => setView('gallery')} className={cn("hover:underline decoration-4 decoration-pop-green transition-all", view === 'gallery' && "underline")}>Gallery</button>
           <button onClick={() => setView('collection')} className={cn("hover:underline decoration-4 decoration-pop-cyan transition-all", view === 'collection' && "underline")}>Collection</button>
           <button onClick={() => setView('pricing')} className={cn("hover:underline decoration-4 decoration-pop-yellow transition-all", view === 'pricing' && "underline")}>Vault</button>
@@ -183,6 +187,12 @@ export default function App() {
              <Film size={20} />
           </button>
           <button 
+             onClick={() => setView('dashboard')}
+             className={cn("w-12 h-12 bg-white border-2 border-black brutal-shadow-sm flex items-center justify-center hover:bg-pop-yellow transition-all", view === 'dashboard' && "bg-pop-yellow -translate-y-0.5 shadow-none")}
+          >
+             <LayoutDashboard size={20} />
+          </button>
+          <button 
              onClick={() => setView('pricing')}
              className={cn("w-12 h-12 bg-white border-2 border-black brutal-shadow-sm flex items-center justify-center hover:bg-pop-yellow transition-all", view === 'pricing' && "bg-pop-yellow -translate-y-0.5 shadow-none")}
           >
@@ -227,6 +237,17 @@ export default function App() {
               </motion.div>
             )}
 
+            {view === 'dashboard' && (
+              <motion.div
+                key="dashboard"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+              >
+                <Dashboard />
+              </motion.div>
+            )}
+
             {view === 'collection' && user && (
               <motion.div
                 key="collection"
@@ -244,17 +265,8 @@ export default function App() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
               >
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="brutal-border brutal-shadow-lg p-6 bg-white space-y-4">
-                    <div className={cn("h-48 border-2 border-black", i % 3 === 0 ? "bg-pop-pink" : i % 3 === 1 ? "bg-pop-cyan" : "bg-pop-green")}>
-                      <div className="w-full h-full opacity-10" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '10px 10px' }} />
-                    </div>
-                    <h3 className="font-black italic">HALLUCINATION_#{i + 101}</h3>
-                    <button onClick={() => setView('canvas')} className="brutal-btn w-full">REMIX_DATA</button>
-                  </div>
-                ))}
+                <Gallery onRemix={onRemix} />
               </motion.div>
             )}
 

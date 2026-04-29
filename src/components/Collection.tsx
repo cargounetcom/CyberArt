@@ -19,9 +19,10 @@ interface CollectionProps {
   userId: string;
   onEdit: (canvas: CanvasData) => void;
   onRemix: (canvas: CanvasData) => void;
+  onMint: (canvas: CanvasData) => void;
 }
 
-export function Collection({ userId, onEdit, onRemix }: CollectionProps) {
+export function Collection({ userId, onEdit, onRemix, onMint }: CollectionProps) {
   const [canvases, setCanvases] = useState<CanvasData[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -138,6 +139,12 @@ export function Collection({ userId, onEdit, onRemix }: CollectionProps) {
                     >
                       {listedIds.has(canvas.id) ? <Check size={14}/> : <ShoppingCart size={14}/>}
                       {listedIds.has(canvas.id) ? 'LISTED' : 'LIST'}
+                    </button>
+                    <button
+                      onClick={() => onMint(canvas)}
+                      className="brutal-btn bg-pop-cyan text-black text-[10px]"
+                    >
+                      MINT_NFT
                     </button>
                     <button
                       onClick={() => generateCertificate({

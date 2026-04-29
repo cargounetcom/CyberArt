@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { auth } from '../lib/firebase';
+import confetti from 'canvas-confetti';
 
 interface ApiKey {
   id: string;
@@ -29,11 +30,14 @@ interface ApiKey {
   usage: number;
 }
 
-export function Dashboard() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'api' | 'docs' | 'license' | 'downloads' | 'profit' | 'sync' | 'trends'>('overview');
+export function Dashboard({ initialTab = 'overview' }: { initialTab?: 'overview' | 'api' | 'docs' | 'license' | 'downloads' | 'profit' | 'sync' | 'trends' | 'nft' }) {
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'refused'>('idle');
   const [trendReport, setTrendReport] = useState<any>(null);
   const [isLoadingTrends, setIsLoadingTrends] = useState(false);
+  const [isMinting, setIsMinting] = useState(false);
+  const [mintStatus, setMintStatus] = useState<'idle' | 'minting' | 'success'>('idle');
+  const [selectedChain, setSelectedChain] = useState<'polygon' | 'solana'>('polygon');
 
   useEffect(() => {
     if (activeTab === 'trends' && !trendReport) {
@@ -59,14 +63,32 @@ export function Dashboard() {
 
   const user = auth.currentUser;
 
-  const handleFreeDownload = (url: string, name: string) => {
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${name}.png`;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleMintNft = async () => {
+    setIsMinting(true);
+    setMintStatus('minting');
+    // Simulate complex blockchain transaction
+    await new Promise(r => setTimeout(r, 3000));
+    setMintStatus('success');
+    setIsMinting(false);
+    confetti({ particleCount: 150, spread: 70, colors: selectedChain === 'polygon' ? ['#8247E5', '#FFFFFF'] : ['#14F195', '#9945FF'] });
+  };
+
+  const handleFreeDownload = async (url: string, name: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `${name}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch (e) {
+      // Fallback if fetch fails
+      window.open(url, '_blank');
+    }
   };
 
   const runConnectionTest = async () => {
@@ -126,6 +148,7 @@ export function Dashboard() {
           <TabButton active={activeTab === 'license'} onClick={() => setActiveTab('license')} icon={<ShieldCheck size={18}/>} label="Legal_License" />
           <TabButton active={activeTab === 'downloads'} onClick={() => setActiveTab('downloads')} icon={<Download size={18}/>} label="System_Asset_Downloads" />
           <TabButton active={activeTab === 'trends'} onClick={() => setActiveTab('trends')} icon={<Sparkles size={18} className="text-pop-yellow"/>} label="Neural_Trend_Engine" />
+          <TabButton active={activeTab === 'nft'} onClick={() => setActiveTab('nft')} icon={<Zap size={18} className="text-pop-cyan"/>} label="NFT_Minting_Vault" />
           <TabButton active={activeTab === 'profit'} onClick={() => setActiveTab('profit')} icon={<Activity size={18}/>} label="Wealth_Metrics" />
           <TabButton active={activeTab === 'sync'} onClick={() => setActiveTab('sync')} icon={<RefreshCw size={18}/>} label="Archives_Sync" />
         </div>
@@ -298,6 +321,117 @@ export function Dashboard() {
                       </div>
                    </div>
                 ) : null}
+              </motion.div>
+            )}
+
+            {activeTab === 'nft' && (
+              <motion.div
+                key="nft"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-8"
+              >
+                <div className="brutal-border p-8 bg-black text-white brutal-shadow-lg relative overflow-hidden">
+                   <div className="absolute top-0 right-0 w-64 h-64 bg-pop-pink blur-[100px] opacity-20" />
+                   <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                     <div className="space-y-6">
+                        <div className="flex items-center gap-2 text-pop-cyan">
+                           <ShieldCheck size={24} />
+                           <span className="text-xs font-black uppercase tracking-widest">LAYER_2_SOVEREIGNTY_PROTOCOL</span>
+                        </div>
+                        <h2 className="text-6xl font-black italic tracking-tighter uppercase leading-none">Neural_Asset_Vault</h2>
+                        <p className="max-w-md text-sm font-bold uppercase leading-relaxed opacity-70">
+                           Transform your neural generation into a permanent cryptographic asset. Select your chain and execute the minting sequence.
+                        </p>
+                        
+                        <div className="flex gap-4">
+                           <button 
+                             onClick={() => setSelectedChain('polygon')}
+                             className={cn(
+                               "brutal-border px-6 py-3 flex flex-col items-center gap-2 transition-all",
+                               selectedChain === 'polygon' ? "bg-white text-black translate-x-1 translate-y-1 shadow-none" : "bg-black text-white hover:bg-gray-900 brutal-shadow-sm"
+                             )}
+                           >
+                              <div className="w-6 h-6 bg-[#8247E5] rounded-full" />
+                              <span className="text-[10px] font-black italic">POLYGON_POS</span>
+                           </button>
+                           <button 
+                             onClick={() => setSelectedChain('solana')}
+                             className={cn(
+                               "brutal-border px-6 py-3 flex flex-col items-center gap-2 transition-all",
+                               selectedChain === 'solana' ? "bg-white text-black translate-x-1 translate-y-1 shadow-none" : "bg-black text-white hover:bg-gray-900 brutal-shadow-sm"
+                             )}
+                           >
+                              <div className="w-6 h-6 bg-gradient-to-tr from-[#14F195] to-[#9945FF] rounded-full" />
+                              <span className="text-[10px] font-black italic">SOLANA_CORE</span>
+                           </button>
+                        </div>
+                     </div>
+
+                     <div className="brutal-border bg-white p-8 space-y-6">
+                        <div className="aspect-square bg-gray-100 brutal-border overflow-hidden relative group">
+                           <img src="https://pollinations.ai/p/abstract%20digital%20sculpture%20vibrant%20colors%20floating%20in%20void?width=512&height=512&seed=42&nologo=true" className="w-full h-full object-cover" alt="Preview NFT" />
+                           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <span className="text-white text-[10px] font-black uppercase tracking-[0.3em]">LAST_LOCAL_SAVE</span>
+                           </div>
+                        </div>
+                        
+                        {mintStatus === 'success' ? (
+                          <div className="bg-pop-green p-4 brutal-border-sm text-black flex items-center gap-3 animate-in fade-in zoom-in">
+                             <CheckCircle2 size={24} />
+                             <div>
+                                <p className="text-xs font-black uppercase">MINTING_COMPLETE</p>
+                                <p className="text-[8px] font-black opacity-50 uppercase leading-none mt-1">Transaction: 0x{Math.random().toString(16).substring(2, 20).toUpperCase()}</p>
+                             </div>
+                          </div>
+                        ) : (
+                          <button 
+                            disabled={isMinting}
+                            onClick={handleMintNft}
+                            className={cn(
+                              "w-full py-4 brutal-border text-lg font-black italic uppercase transition-all shadow-none",
+                              isMinting ? "bg-gray-200 text-gray-500 cursor-not-allowed" : "bg-pop-pink text-white hover:-translate-y-1 hover:shadow-[8px_8px_0_0_rgba(0,0,0,1)] active:translate-y-0 active:shadow-none"
+                            )}
+                          >
+                             {isMinting ? (
+                               <span className="flex items-center justify-center gap-2">
+                                  <RefreshCw className="animate-spin" size={20} />
+                                  SEQUENCING...
+                               </span>
+                             ) : (
+                               `MINT_ON_${selectedChain.toUpperCase()}`
+                             )}
+                          </button>
+                        )}
+                        
+                        <p className="text-[9px] font-black uppercase text-center opacity-30 mt-4 leading-tight">
+                        * MINTING REQUIRES 0.05 ETH / 1.5 SOL IN SYNC_FEES. ALL GAS IS AUTOMATICALLY OPTIMIZED BY THE NEURAL ENGINE.
+                        </p>
+                     </div>
+                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                   <div className="brutal-border p-6 bg-white space-y-2">
+                      <h4 className="text-sm font-black uppercase italic border-b border-black pb-1 mb-2">Smart_Contract_v4</h4>
+                      <p className="text-[9px] font-bold uppercase leading-relaxed opacity-60">
+                         ARTREMIX-SOVEREIGN-721 Standard. Includes royalty protection for original neural seeds and secondary marketplace splits.
+                      </p>
+                   </div>
+                   <div className="brutal-border p-6 bg-white space-y-2">
+                      <h4 className="text-sm font-black uppercase italic border-b border-black pb-1 mb-2">Metadata_Sync</h4>
+                      <p className="text-[9px] font-bold uppercase leading-relaxed opacity-60">
+                         All metadata is stored via IPFS/Filecoin persistent nodes. Neural genealogy is permanently etched into the global ledger.
+                      </p>
+                   </div>
+                   <div className="brutal-border p-6 bg-white space-y-2">
+                      <h4 className="text-sm font-black uppercase italic border-b border-black pb-1 mb-2">Social_Uplink</h4>
+                      <p className="text-[9px] font-bold uppercase leading-relaxed opacity-60">
+                         Auto-share to OpenSea, MagicEden, and ArtRemix Social upon completion. Integrated provenance verification.
+                      </p>
+                   </div>
+                </div>
               </motion.div>
             )}
 
@@ -669,12 +803,24 @@ export function Dashboard() {
                            <p className="text-[8px] font-black uppercase opacity-50">ASSET_ID: SYS_CAL_01</p>
                            <h4 className="text-lg font-black uppercase tracking-tighter italic">Calibration_Node_01</h4>
                         </div>
-                        <button 
-                          onClick={() => handleFreeDownload('https://pollinations.ai/p/calibration%20image%20abstract%20geometric%20patterns%20blue%20and%20white%20pulse?width=1024&height=1024&seed=1&nologo=true', 'sys_cal_01')}
-                          className="brutal-btn-sm bg-pop-cyan"
-                        >
-                           DOWNLOAD_FREE
-                        </button>
+                        <div className="flex gap-2">
+                           <a 
+                             href="https://pollinations.ai/p/calibration%20image%20abstract%20geometric%20patterns%20blue%20and%20white%20pulse?width=1024&height=1024&seed=1&nologo=true"
+                             target="_blank"
+                             rel="noopener noreferrer"
+                             className="w-10 h-10 bg-white brutal-border flex items-center justify-center hover:bg-pop-pink transition-colors"
+                             title="Preview HQ"
+                           >
+                             <ExternalLink size={18} />
+                           </a>
+                           <button 
+                             onClick={() => handleFreeDownload('https://pollinations.ai/p/calibration%20image%20abstract%20geometric%20patterns%20blue%20and%20white%20pulse?width=1024&height=1024&seed=1&nologo=true', 'sys_cal_01')}
+                             className="brutal-btn-sm bg-pop-cyan flex items-center gap-2"
+                           >
+                              <Download size={14} />
+                              SAVE
+                           </button>
+                        </div>
                      </div>
                   </div>
 
@@ -687,12 +833,24 @@ export function Dashboard() {
                            <p className="text-[8px] font-black uppercase opacity-50">ASSET_ID: SYS_CAL_02</p>
                            <h4 className="text-lg font-black uppercase tracking-tighter italic">Calibration_Node_02</h4>
                         </div>
-                        <button 
-                          onClick={() => handleFreeDownload('https://pollinations.ai/p/calibration%20image%20pink%20fluid%20waves%20soft%20highlights?width=1024&height=1024&seed=2&nologo=true', 'sys_cal_02')}
-                          className="brutal-btn-sm bg-pop-pink"
-                        >
-                           DOWNLOAD_FREE
-                        </button>
+                        <div className="flex gap-2">
+                           <a 
+                             href="https://pollinations.ai/p/calibration%20image%20pink%20fluid%20waves%20soft%20highlights?width=1024&height=1024&seed=2&nologo=true"
+                             target="_blank"
+                             rel="noopener noreferrer"
+                             className="w-10 h-10 bg-white brutal-border flex items-center justify-center hover:bg-pop-pink transition-colors"
+                             title="Preview HQ"
+                           >
+                             <ExternalLink size={18} />
+                           </a>
+                           <button 
+                             onClick={() => handleFreeDownload('https://pollinations.ai/p/calibration%20image%20pink%20fluid%20waves%20soft%20highlights?width=1024&height=1024&seed=2&nologo=true', 'sys_cal_02')}
+                             className="brutal-btn-sm bg-pop-pink flex items-center gap-2"
+                           >
+                              <Download size={14} />
+                              SAVE
+                           </button>
+                        </div>
                      </div>
                   </div>
                 </div>
@@ -732,4 +890,4 @@ const TabButton = ({ active, onClick, icon, label }: { active: boolean, onClick:
   </button>
 );
 
-const aiThemes = ["NEON_GOTHIC", "VOID_ABSTRACTION", "FROZEN_NODES", "SYBASE_PUNK", "CHROME_GHOST"];
+const aiThemes = ["NEON_GOTHIC", "VOID_ABSTRACTION", "FROZEN_NODES", "SYBASE_PUNK", "CHROME_GHOST", "ANIME_GHOST"];

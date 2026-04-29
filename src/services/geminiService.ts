@@ -51,3 +51,66 @@ export async function generateTrendReport(): Promise<TrendReport> {
     };
   }
 }
+
+export interface ComicScript {
+  title: string;
+  panels: {
+    panelNumber: number;
+    visualDescription: string;
+    caption: string;
+    dialogue: string;
+  }[];
+}
+
+export async function generateComicScript(topic: string): Promise<ComicScript> {
+  const prompt = `
+    Generate a 4-panel comic script for the following topic: "${topic}".
+    The style should be "ArtRemix Cyber-Art" - dark, noir, neon, or brutalist.
+    Return only a JSON object:
+    {
+      "title": "string",
+      "panels": [
+        {
+          "panelNumber": 1,
+          "visualDescription": "detailed image generation prompt",
+          "caption": "narrative text",
+          "dialogue": "character speech"
+        }
+      ]
+    }
+  `;
+
+  try {
+    const result = await ai.models.generateContent({
+      model: "gemini-1.5-flash",
+      contents: prompt
+    });
+    const text = result.text || "";
+    const jsonStr = text.replace(/```json|```/g, '').trim();
+    return JSON.parse(jsonStr);
+  } catch (error) {
+    console.error("Comic Generation Error:", error);
+    throw error;
+  }
+}
+
+export async function generateMemeCaptions(subject: string): Promise<string[]> {
+  const prompt = `
+    Generate 5 funny, slightly absurdist, and "Internet Culture" style meme captions for the following subject: "${subject}".
+    Focus on "Doge", "Chad", "Distracted Boyfriend", or "Surreal" vibes.
+    Return only a JSON array of strings.
+  `;
+
+  try {
+    const result = await ai.models.generateContent({
+      model: "gemini-1.5-flash",
+      contents: prompt
+    });
+    const text = result.text || "";
+    const jsonStr = text.replace(/```json|```/gi, '').trim();
+    return JSON.parse(jsonStr);
+  } catch (error) {
+    console.error("Meme Caption Error:", error);
+    return ["When the neural ghost hits just right", "Neural network goes brrrr", "Refactoring my life with AI", "It's not a bug, it's impressionism", "Cyber-brutalism is my personality now"];
+  }
+}

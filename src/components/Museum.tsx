@@ -12,6 +12,7 @@ interface MuseumArtifact {
   imageUrl: string;
   donationStatus: 'RESTORING' | 'PRESERVED' | 'DIGITIZING';
   description: string;
+  suggestedStyle?: string;
 }
 
 const MUSEUM_COLLECTION: MuseumArtifact[] = [
@@ -23,7 +24,8 @@ const MUSEUM_COLLECTION: MuseumArtifact[] = [
     source: 'LOUVRE_SYNC',
     imageUrl: 'https://pollinations.ai/p/Mona%20Lisa%20hyper%20detailed%20neural%20restoration?width=800&height=1000&seed=44',
     donationStatus: 'PRESERVED',
-    description: 'Neural restoration funded via ArtRemix Marketplace commissions. Every pixel recalibrated for 4K display.'
+    description: 'Neural restoration funded via ArtRemix Marketplace commissions. Every pixel recalibrated for 4K display.',
+    suggestedStyle: 'IMPRESSIONISM'
   },
   {
     id: 'm-2',
@@ -33,7 +35,8 @@ const MUSEUM_COLLECTION: MuseumArtifact[] = [
     source: 'AIC_UPLINK',
     imageUrl: 'https://pollinations.ai/p/American%20Gothic%20painting%20high%20resolution%20digital%20archive?width=800&height=1000&seed=99',
     donationStatus: 'DIGITIZING',
-    description: 'High-fidelity digitization in progress. Funded by the April 2026 collector cycle.'
+    description: 'High-fidelity digitization in progress. Funded by the April 2026 collector cycle.',
+    suggestedStyle: 'GHOSTLY_GOTHIC'
   },
   {
     id: 'm-3',
@@ -43,11 +46,38 @@ const MUSEUM_COLLECTION: MuseumArtifact[] = [
     source: 'MOMA_SYNC',
     imageUrl: 'https://pollinations.ai/p/Starry%20Night%20neural%20remix%20painting%20swirls%20glowing?width=1000&height=800&seed=11',
     donationStatus: 'RESTORING',
-    description: 'Currently undergoing layer-by-layer neural extraction to preserve the brushwork fingerprints for eternity.'
+    description: 'Currently undergoing layer-by-layer neural extraction to preserve the brushwork fingerprints for eternity.',
+    suggestedStyle: 'POINTILLISM'
+  },
+  {
+    id: 'm-4',
+    title: 'CAFE_TERRACE_NEURAL',
+    author: 'VAN_GOGH_AI',
+    year: '1888 / 2026',
+    source: 'KROLLER_SYNC',
+    imageUrl: 'https://pollinations.ai/p/Cafe%20Terrace%20at%20Night%20Van%20Gogh%20neural%20restoration%20glowing%20stars?width=800&height=1000&seed=77',
+    donationStatus: 'PRESERVED',
+    description: 'A study in neural stippling and nocturnal luminescence. The dots are recalculated using Pointillism algorithms.',
+    suggestedStyle: 'POINTILLISM'
+  },
+  {
+    id: 'm-5',
+    title: 'CYBER_SUNFLOWERS',
+    author: 'VAN_GOGH_AI',
+    year: '1888 / 2026',
+    source: 'NG_SYNC',
+    imageUrl: 'https://pollinations.ai/p/Sunflowers%20Van%20Gogh%20painting%20hyper%20detailed%20texture?width=800&height=1000&seed=88',
+    donationStatus: 'DIGITIZING',
+    description: 'Deconstructing the organic curves of the sunflowers into digital vectors while maintaining the impressionist vibrance.',
+    suggestedStyle: 'IMPRESSIONISM'
   }
 ];
 
-export function Museum() {
+interface MuseumProps {
+  onImport?: (artifact: { imageUrl: string, title: string, author: string, suggestedStyle?: string }) => void;
+}
+
+export function Museum({ onImport }: MuseumProps) {
   const [selectedArtifact, setSelectedArtifact] = useState<MuseumArtifact | null>(null);
 
   return (
@@ -64,7 +94,7 @@ export function Museum() {
            </div>
            <h2 className="leading-none mb-4">Virtual_Museum</h2>
            <p className="max-w-2xl text-xs md:text-sm font-bold uppercase opacity-80 leading-relaxed">
-              Every transaction on ArtRemix contributes 5% to the Global Historical Sync. These artifacts represent the heritage we are preserving in the neural cloud.
+              Every transaction on ArtRemix contributes 1% to the Global Historical Sync. These artifacts represent the heritage we are preserving in the neural cloud.
            </p>
         </div>
       </div>
@@ -129,7 +159,7 @@ export function Museum() {
           >
             <motion.div 
                layoutId={selectedArtifact.id}
-               className="bg-white brutal-border max-w-5xl w-full flex flex-col md:flex-row overflow-hidden relative"
+               className="bg-white brutal-border max-w-5xl w-full flex flex-col md:flex-row overflow-hidden relative shadow-[20px_20px_0_0_rgba(0,0,0,1)]"
             >
                <button 
                  onClick={() => setSelectedArtifact(null)}
@@ -162,15 +192,37 @@ export function Museum() {
                         </p>
                      </div>
 
-                     <div className="grid grid-cols-2 gap-4">
-                        <button className="brutal-btn bg-black text-white flex items-center justify-center gap-2">
-                           <Eye size={18} />
-                           VIEW_HQ
+                     <div className="space-y-4">
+                        <button 
+                          onClick={() => {
+                            onImport?.({
+                              imageUrl: selectedArtifact.imageUrl,
+                              title: selectedArtifact.title,
+                              author: selectedArtifact.author,
+                              suggestedStyle: selectedArtifact.suggestedStyle
+                            });
+                            setSelectedArtifact(null);
+                          }}
+                          className="w-full brutal-btn bg-pop-yellow text-black flex items-center justify-center gap-3 py-4 font-black italic uppercase"
+                        >
+                           <Sparkles size={20} />
+                           EXTRACT_FOR_NEURAL_REMIX
                         </button>
-                        <button className="brutal-btn bg-pop-green text-black flex items-center justify-center gap-2">
-                           <MapPin size={18} />
-                           FIND_ORIGINAL
-                        </button>
+                        <div className="grid grid-cols-2 gap-4">
+                           <a 
+                             href={selectedArtifact.imageUrl}
+                             target="_blank"
+                             rel="noopener noreferrer"
+                             className="brutal-btn bg-black text-white flex items-center justify-center gap-2 py-3 no-underline"
+                           >
+                              <Eye size={18} />
+                              VIEW_HQ
+                           </a>
+                           <button className="brutal-btn bg-pop-green text-black flex items-center justify-center gap-2 py-3">
+                              <MapPin size={18} />
+                              FIND_ORIGINAL
+                           </button>
+                        </div>
                      </div>
                   </div>
                </div>

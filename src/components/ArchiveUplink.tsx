@@ -11,6 +11,7 @@ interface ArchiveItem {
   institution: string;
   thumbnail: string;
   category: 'RENAISSANCE' | 'BAROQUE' | 'MODERN' | 'SURREAL';
+  suggestedStyle?: string;
 }
 
 const MOCK_ARCHIVE_RESULTS: ArchiveItem[] = [
@@ -20,8 +21,9 @@ const MOCK_ARCHIVE_RESULTS: ArchiveItem[] = [
     author: 'HIERONYMUS_BOSCH',
     year: '1500',
     institution: 'PRADO_MUSEUM',
-    thumbnail: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/The_Garden_of_Earthly_Delights_by_Bosch_High_Resolution.jpg/1280px-The_Garden_of_Earthly_Delights_by_Bosch_High_Resolution.jpg',
-    category: 'RENAISSANCE'
+    thumbnail: 'https://pollinations.ai/p/The%20Garden%20of%20Earthly%20Delights%20painting%20high%20res?width=800&height=500&seed=1',
+    category: 'RENAISSANCE',
+    suggestedStyle: 'SURREALISM'
   },
   {
     id: 'arc-2',
@@ -29,8 +31,9 @@ const MOCK_ARCHIVE_RESULTS: ArchiveItem[] = [
     author: 'REMBRANDT',
     year: '1642',
     institution: 'RIJKSMUSEUM',
-    thumbnail: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/The_Night_Watch_-_HD.jpg/1280px-The_Night_Watch_-_HD.jpg',
-    category: 'BAROQUE'
+    thumbnail: 'https://pollinations.ai/p/The%20Night%20Watch%20painting%20high%20res?width=800&height=600&seed=2',
+    category: 'BAROQUE',
+    suggestedStyle: 'IMPRESSIONISM'
   },
   {
     id: 'arc-3',
@@ -38,8 +41,47 @@ const MOCK_ARCHIVE_RESULTS: ArchiveItem[] = [
     author: 'VINCENT_VAN_GOGH',
     year: '1889',
     institution: 'MOMA',
-    thumbnail: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/1280px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg',
-    category: 'MODERN'
+    thumbnail: 'https://pollinations.ai/p/The%20Starry%20Night%20painting%20high%20res?width=800&height=600&seed=3',
+    category: 'MODERN',
+    suggestedStyle: 'POINTILLISM'
+  },
+  {
+    id: 'arc-4',
+    title: 'SUNFLOWERS_NEURAL',
+    author: 'VINCENT_VAN_GOGH',
+    year: '1888',
+    institution: 'NATIONAL_GALLERY',
+    thumbnail: 'https://pollinations.ai/p/Sunflowers%20painting%20Van%20Gogh%20high%20res?width=600&height=800&seed=4',
+    category: 'MODERN',
+    suggestedStyle: 'POINTILLISM'
+  },
+  {
+    id: 'arc-5',
+    title: 'WHEATFIELD_WITH_CROWS',
+    author: 'VINCENT_VAN_GOGH',
+    year: '1890',
+    institution: 'VAN_GOGH_MUSEUM',
+    thumbnail: 'https://pollinations.ai/p/Wheatfield%20with%20Crows%20painting%20Van%20Gogh%20high%20res?width=800&height=600&seed=5',
+    category: 'MODERN',
+    suggestedStyle: 'POINTILLISM'
+  },
+  {
+    id: 'arc-6',
+    title: 'SELF_PORTRAIT_1500',
+    author: 'ALBRECHT_DURER',
+    year: '1500',
+    institution: 'ALTE_PINAKOTHEK',
+    thumbnail: 'https://pollinations.ai/p/Albrecht%20Durer%20Self%20Portrait%20painting%20high%20res%20German%20Renaissance?width=600&height=800&seed=66',
+    category: 'RENAISSANCE'
+  },
+  {
+    id: 'arc-7',
+    title: 'ADAM_AND_EVE',
+    author: 'ALBRECHT_DURER',
+    year: '1507',
+    institution: 'PRADO_MUSEUM',
+    thumbnail: 'https://pollinations.ai/p/Adam%20and%20Eve%20Albrecht%20Durer%20Renaissance%20painting?width=800&height=1000&seed=77',
+    category: 'RENAISSANCE'
   }
 ];
 
@@ -55,6 +97,12 @@ export function ArchiveUplink({ onImport }: { onImport: (item: ArchiveItem) => v
     }, 1500);
   };
 
+  const filteredResults = MOCK_ARCHIVE_RESULTS.filter(item => 
+    item.title.toLowerCase().includes(search.toLowerCase()) || 
+    item.author.toLowerCase().includes(search.toLowerCase()) ||
+    item.institution.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <div className="space-y-8 min-h-screen pb-20">
       {/* Search Header */}
@@ -69,14 +117,12 @@ export function ArchiveUplink({ onImport }: { onImport: (item: ArchiveItem) => v
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30 group-hover:text-pop-yellow transition-colors" size={20} />
               <input 
                 type="text" 
-                placeholder="SEARCH_GOOG_ARTS_CULTURE_DB..." 
+                placeholder="SEARCH_VAN_GOGH_AND_OTHERS..." 
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 className="w-full pl-12 pr-12 py-5 bg-white text-black brutal-border font-black text-lg italic uppercase outline-none focus:bg-pop-yellow transition-colors"
               />
               <button 
-                onClick={handleSearch}
                 className="absolute right-2 top-1/2 -translate-y-1/2 brutal-btn-sm bg-black text-white px-6 h-10 hover:bg-pop-pink"
               >
                 {isSearching ? <RefreshCw className="animate-spin" size={16} /> : 'QUERY'}
@@ -88,7 +134,13 @@ export function ArchiveUplink({ onImport }: { onImport: (item: ArchiveItem) => v
       {/* Filters */}
       <div className="flex flex-wrap gap-4 border-b-4 border-black pb-4">
          {['ALL_ARCHIVES', 'RENAISSANCE', 'BAROQUE', 'MODERN', 'SURREAL'].map(cat => (
-           <button key={cat} className="px-4 py-1 text-[10px] font-black uppercase brutal-border-sm hover:bg-pop-cyan transition-colors">
+           <button 
+            key={cat} 
+            className={cn(
+              "px-4 py-1 text-[10px] font-black uppercase brutal-border-sm hover:bg-pop-cyan transition-colors",
+              cat === 'ALL_ARCHIVES' && "bg-black text-white"
+            )}
+           >
               {cat}
            </button>
          ))}
@@ -96,8 +148,8 @@ export function ArchiveUplink({ onImport }: { onImport: (item: ArchiveItem) => v
 
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <AnimatePresence>
-          {results.map((item, index) => (
+        <AnimatePresence mode="popLayout">
+          {filteredResults.map((item, index) => (
             <motion.div
               key={item.id}
               initial={{ opacity: 0, y: 20 }}

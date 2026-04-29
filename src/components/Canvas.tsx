@@ -107,35 +107,47 @@ interface CanvasControlProps {
   initialShapes?: ShapeProps[];
   onSave?: (shapes: ShapeProps[]) => void;
   isSaving?: boolean;
-  importTemplate?: { imageUrl: string, title: string, author: string } | null;
+  importTemplate?: { imageUrl: string, title: string, author: string, suggestedStyle?: string } | null;
   onClearTemplate?: () => void;
 }
 
 export function CanvasControl({ initialShapes, onSave, isSaving, importTemplate, onClearTemplate }: CanvasControlProps) {
   const [shapes, setShapes] = useState<ShapeProps[]>([]);
   const [selectedId, selectShape] = useState<string | null>(null);
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<any>(null);
 
   useEffect(() => {
-    if (importTemplate) {
+    if (importTemplate && containerSize.width > 0) {
+      // Logic to center the imported artifact
+      const width = Math.min(containerSize.width * 0.8, 400);
+      const height = width;
+      const x = (containerSize.width / 2) - (width / 2);
+      const y = (containerSize.height / 2) - (height / 2);
+
       const newShape: ShapeProps = {
         id: `import-${Date.now()}`,
         type: 'image',
-        x: 50,
-        y: 50,
-        width: 300,
-        height: 300,
+        x,
+        y,
+        width,
+        height,
         imageSource: importTemplate.imageUrl,
         fill: '#ffffff',
         rotation: 0
       };
       setShapes(prev => [...prev, newShape]);
+      
       onClearTemplate?.();
-      confetti({ particleCount: 30, spread: 30 });
+      confetti({ 
+        particleCount: 100, 
+        spread: 70, 
+        origin: { y: 0.6 },
+        colors: ['#FFD700', '#00D1FF', '#FF00D6']
+      });
     }
-  }, [importTemplate]);
-  const stageRef = useRef<any>(null);
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
-  const containerRef = useRef<HTMLDivElement>(null);
+  }, [importTemplate, containerSize]);
   const [aspectRatio, setAspectRatio] = useState<'square' | 'a4' | 'poster' | 'tiktok' | 'video' | 'banner'>('square');
   const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d');
   const [aiPrompt, setAiPrompt] = useState('');
@@ -223,7 +235,13 @@ export function CanvasControl({ initialShapes, onSave, isSaving, importTemplate,
     { id: 'IMPRESSIONISM', label: 'IMPRESS' },
     { id: 'SURREALISM', label: 'SURREAL' },
     { id: 'COLORING_PAGE', label: 'COLOR' },
+    { id: 'ANIME_AVATAR', label: 'ANIME' },
+    { id: 'POINTILLISM', label: 'POINT' },
+    { id: 'MEME_GEN', label: 'MEME' },
+    { id: 'COMIC_BOOK', label: 'COMIC' },
   ];
+
+  const [canvasBg, setCanvasBg] = useState('#ffffff');
 
   const onFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -308,7 +326,11 @@ export function CanvasControl({ initialShapes, onSave, isSaving, importTemplate,
         TAIWING_FLUID: "Abstract flowing composition in Taiwing style, soft watercolor gradients, ethereal liquid shapes, smooth transitions between pastel turquoise and deep violet tones, aesthetic fluid art, minimalist.",
         IMPRESSIONISM: "Impressionist oil painting style, visible brushstrokes, emphasis on light and its changing qualities, ordinary subject matter, movement as a crucial element, vibrant colors.",
         SURREALISM: "Surrealist masterpiece, dreamlike scenes, symbolic imagery, illogical juxtapositions, bizarre subconscious elements, Dali-inspired melting shapes.",
-        COLORING_PAGE: "Black and white line art coloring page, abstract contour drawing of fluid waves, clean bold lines, no shading, no numbers, white background, high contrast."
+        COLORING_PAGE: "Clean black and white line art coloring page, no shading, no gray, bold outlines, white background, high contrast, coloring book style.",
+        ANIME_AVATAR: "High resolution anime character bust, vibrant cel shading, expressive eyes, sleek lineart, modern anime aesthetic, high quality illustration, white background.",
+        POINTILLISM: "Pointillism painting style, composed of small distinct dots of color, masterwork, impressionist technique, vibrant stippling, Georges Seurat style.",
+        MEME_GEN: "Classic internet meme style, high contrast image, bold white Impact font text with black outline at the top and bottom, humorous situation, viral aesthetic.",
+        COMIC_BOOK: "Vintage comic book style, bold ink lines, Ben-Day dots, dramatic shadows, action-packed composition, speech bubbles, classic superhero aesthetic."
       }[aiStyle as keyof typeof styleContext];
 
       const res = await fetch('/api/refine-prompt', {
@@ -527,6 +549,21 @@ export function CanvasControl({ initialShapes, onSave, isSaving, importTemplate,
           </div>
           
           <div className="flex flex-col gap-1 border-l-2 border-black pl-4 ml-2">
+            <span className="text-[8px] font-black uppercase opacity-50 mb-1">Canvas_BG</span>
+            <div className="relative w-10 h-10 border-2 border-black brutal-border-sm brutal-shadow-sm overflow-hidden flex items-center justify-center bg-white group hover:scale-110 transition-transform">
+              <Monitor size={16} className="absolute pointer-events-none z-10" />
+              <input 
+                type="color" 
+                value={canvasBg} 
+                onChange={(e) => setCanvasBg(e.target.value)}
+                className="w-16 h-16 absolute -top-3 -left-3 cursor-pointer opacity-0"
+                title="Stage Background"
+              />
+              <div style={{ backgroundColor: canvasBg }} className="w-full h-full" />
+            </div>
+          </div>
+          
+          <div className="flex flex-col gap-1 border-l-2 border-black pl-4 ml-2">
             <div className="flex gap-1">
               {STYLES.map(s => (
                 <button
@@ -707,9 +744,9 @@ export function CanvasControl({ initialShapes, onSave, isSaving, importTemplate,
           }}
           transition={{ duration: 0.6, type: "spring" }}
           style={{ width: containerSize.width, height: containerSize.height }}
-          className="bg-white border-4 border-black relative overflow-hidden"
+          className="border-4 border-black relative overflow-hidden"
         >
-          <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '12px 12px' }}></div>
+          <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '12px 12px', backgroundColor: canvasBg }}></div>
           <Stage
             width={containerSize.width}
             height={containerSize.height}
@@ -722,7 +759,7 @@ export function CanvasControl({ initialShapes, onSave, isSaving, importTemplate,
               <Rect 
                 width={containerSize.width} 
                 height={containerSize.height} 
-                fill="white" 
+                fill={canvasBg} 
                 listening={false} 
               />
               {shapes.map((shape) => {

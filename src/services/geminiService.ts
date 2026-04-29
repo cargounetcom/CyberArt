@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
 export interface TrendReport {
   hotStyles: string[];
@@ -24,15 +24,11 @@ export async function generateTrendReport(): Promise<TrendReport> {
 
   try {
     const result = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-1.5-flash",
       contents: prompt
     });
     
-    // In this SDK version, result.text is likely the way to get text
     let text = result.text || "";
-    if (typeof result.text === 'function') {
-      text = await (result.text as any)();
-    }
     
     // Scrub potential markdown code blocks
     const jsonStr = text.replace(/```json|```/g, '').trim();

@@ -449,51 +449,74 @@ export function Dashboard({ initialTab = 'overview' }: { initialTab?: 'overview'
                     <div className="flex justify-between items-center border-b-2 border-black pb-4">
                        <h3 className="text-2xl font-black italic uppercase tracking-tighter">PROJECTED_NEURAL_REVENUE</h3>
                        <div className="flex gap-2">
-                          <span className="bg-pop-green px-2 py-0.5 text-[9px] font-black uppercase">+42%_PROFIT</span>
+                          <span className="bg-pop-green px-2 py-0.5 text-[9px] font-black uppercase">+88%_EFFICIENCY</span>
                        </div>
                     </div>
                     <div className="h-48 flex items-end gap-2 border-l-2 border-b-2 border-black p-4 bg-gray-50">
                        {[60, 45, 80, 55, 90, 70, 100, 85].map((h, i) => (
-                         <div key={i} className="flex-1 bg-black brutal-border-sm hover:bg-pop-pink transition-colors" style={{ height: `${h}%` }} />
+                         <div key={i} className="flex-1 bg-black brutal-border-sm hover:bg-pop-pink transition-colors relative group" style={{ height: `${h}%` }}>
+                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white px-1 text-[8px] opacity-0 group-hover:opacity-100 transition-opacity">€{(h * 420).toLocaleString()}</div>
+                         </div>
                        ))}
                     </div>
-                    <div className="grid grid-cols-3 gap-4 text-center">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                        <div className="p-4 bg-gray-100 brutal-border-sm">
-                          <p className="text-[10px] font-black uppercase opacity-50">Monthly_Recur</p>
-                          <p className="text-xl font-black">€42,500</p>
+                          <p className="text-[10px] font-black uppercase opacity-50">Total_Volume</p>
+                          <p className="text-xl font-black">€1.42M</p>
                        </div>
                        <div className="p-4 bg-gray-100 brutal-border-sm">
-                          <p className="text-[10px] font-black uppercase opacity-50">Credit_Sales</p>
-                          <p className="text-xl font-black">€12,900</p>
+                          <p className="text-[10px] font-black uppercase opacity-50">Net_Remix_Profit</p>
+                          <p className="text-xl font-black text-pop-green">€892K</p>
                        </div>
-                       <div className="p-4 bg-gray-100 brutal-border-sm border-pop-cyan border-2">
-                          <p className="text-[10px] font-black uppercase text-pop-cyan">API_Royalties</p>
-                          <p className="text-xl font-black italic">€8,210</p>
+                       <div className="p-4 bg-gray-100 brutal-border-sm">
+                          <p className="text-[10px] font-black uppercase opacity-50">Museum_Donation</p>
+                          <p className="text-xl font-black text-pop-cyan">€14.2K</p>
+                       </div>
+                       <div className="p-4 bg-gray-100 brutal-border-sm border-pop-pink border-2">
+                          <p className="text-[10px] font-black uppercase text-pop-pink">Burn_Rate</p>
+                          <p className="text-xl font-black italic text-red-500">-€12K</p>
                        </div>
                     </div>
                   </div>
 
-                  {/* Neuro Shop UI */}
-                  <div className="brutal-border p-8 bg-pop-pink brutal-shadow-sm text-white flex flex-col gap-6">
-                    <h3 className="text-2xl font-black italic uppercase tracking-tighter">NEURO_TOP_UP</h3>
-                    <p className="text-xs font-bold uppercase leading-relaxed">
-                       Inject fresh coins into your neural stream.
-                    </p>
-                    
-                    <div className="space-y-3">
-                       <button className="w-full brutal-btn-sm bg-white text-black flex justify-between px-4 py-3 items-center group">
-                          <span className="font-black text-sm">50_COINS</span>
-                          <span className="bg-black text-white px-2 py-1 text-[10px] group-hover:bg-pop-cyan transition-colors">€15.00</span>
-                       </button>
-                       <button className="w-full brutal-btn-sm bg-black text-white flex justify-between px-4 py-3 items-center group">
-                          <span className="font-black text-sm italic">200_COINS</span>
-                          <span className="bg-white text-black px-2 py-1 text-[10px] group-hover:bg-pop-yellow transition-colors">€50.00</span>
-                       </button>
+                  {/* Financial Ratios & Breakdown */}
+                  <div className="brutal-border p-8 bg-black text-white brutal-shadow-sm flex flex-col gap-6">
+                    <h3 className="text-2xl font-black italic uppercase tracking-tighter text-pop-yellow">WEALTH_RATIOS</h3>
+                    <div className="space-y-6">
+                       <div className="space-y-1">
+                          <div className="flex justify-between text-[10px] font-black uppercase">
+                             <span>CAC_TO_LTV</span>
+                             <span className="text-pop-green">1:8.2</span>
+                          </div>
+                          <div className="w-full h-2 bg-white/10 brutal-border-sm">
+                             <div className="h-full bg-pop-green w-[82%]" />
+                          </div>
+                       </div>
+                       <div className="space-y-1">
+                          <div className="flex justify-between text-[10px] font-black uppercase">
+                             <span>NEURAL_MARGIN</span>
+                             <span className="text-pop-cyan">92.4%</span>
+                          </div>
+                          <div className="w-full h-2 bg-white/10 brutal-border-sm">
+                             <div className="h-full bg-pop-cyan w-[92%]" />
+                          </div>
+                       </div>
+                       <div className="space-y-1">
+                          <div className="flex justify-between text-[10px] font-black uppercase">
+                             <span>CHURN_GHOST_PROB</span>
+                             <span className="text-pop-pink">1.2%</span>
+                          </div>
+                          <div className="w-full h-2 bg-white/10 brutal-border-sm">
+                             <div className="h-full bg-pop-pink w-[12%]" />
+                          </div>
+                       </div>
                     </div>
 
-                    <div className="mt-auto pt-6 border-t border-white/20">
-                       <p className="text-[10px] font-black uppercase opacity-70">Commercial_Rate: 1_Coin = 0.25€</p>
-                       <p className="text-[10px] font-black uppercase text-white mt-1 underline decoration-2">Auto_Refill: DISABLED</p>
+                    <div className="mt-auto p-4 brutal-border-sm border-pop-yellow/30 bg-white/5">
+                       <p className="text-[9px] font-black uppercase text-pop-yellow mb-2 tracking-widest">EXECUTIVE_SUMMARY</p>
+                       <p className="text-[10px] font-bold italic leading-relaxed opacity-60">
+                          The neural economy is expanding at a rate of 1.4% per cycle. Integration with museum archives reduces archival leakage by 12%. High scalability detected in the Remix sub-sector.
+                       </p>
                     </div>
                   </div>
                 </div>
@@ -502,15 +525,15 @@ export function Dashboard({ initialTab = 'overview' }: { initialTab?: 'overview'
                    <h4 className="text-xl font-black italic mb-6 border-b-2 border-black pb-2">Profit_Architecture_Specs</h4>
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       <div className="space-y-2">
-                         <p className="text-xs font-black uppercase text-pop-cyan">01 / Marketplace_Dynamics (25%)</p>
+                         <p className="text-xs font-black uppercase text-pop-cyan">01 / Marketplace_Dynamics (21%)</p>
                          <p className="text-[10px] font-bold uppercase opacity-70 leading-relaxed">
-                            Every standard sale generates a 20% commission for your wallet, with an additional 5% automatically routed to museum archival funds for future neural scans.
+                            Every standard sale generates a 20% commission for your wallet, with an additional 1% automatically routed to museum archival funds for future neural scans.
                          </p>
                       </div>
                       <div className="space-y-2">
-                         <p className="text-xs font-black uppercase text-pop-pink">02 / Neural_Auction_Stream (35%)</p>
+                         <p className="text-xs font-black uppercase text-pop-pink">02 / Neural_Auction_Stream (31%)</p>
                          <p className="text-[10px] font-bold uppercase opacity-70 leading-relaxed">
-                            High-stakes auctions yield a premium 30% wallet commission. The 5% museum donation remains constant to ensure ethical data sourcing.
+                            High-stakes auctions yield a premium 30% wallet commission. The 1% museum donation remains constant to ensure ethical data sourcing.
                          </p>
                       </div>
                    </div>

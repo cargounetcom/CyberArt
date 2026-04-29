@@ -169,7 +169,7 @@ export function Marketplace() {
              </div>
              <h1 className="leading-none mb-4">The_Neural<br/>Collector</h1>
              <p className="max-w-xl text-sm md:text-lg font-bold uppercase opacity-80 leading-tight">
-                Trade neural masterworks with guaranteed provenance. 5% of every transaction is donated to the Global Museum Archive Sync Initiative.
+                Trade neural masterworks with guaranteed provenance. 1% of every transaction is donated to the Global Museum Archive Sync Initiative.
              </p>
              <div className="flex gap-4">
                 <button onClick={() => setActiveSegment('buy')} className={cn("brutal-btn px-8 text-black", activeSegment === 'buy' ? "bg-pop-cyan" : "bg-white")}>BROWSE_GRID</button>
@@ -210,7 +210,7 @@ export function Marketplace() {
                     >
                        PLACE_BID (+€500)
                     </button>
-                    <p className="text-center text-[9px] font-black uppercase opacity-60">AUCTION_FEE: 35% TOTAL (30% WALLET + 5% MUSEUM)</p>
+                    <p className="text-center text-[9px] font-black uppercase opacity-60">AUCTION_FEE: 31% TOTAL (30% WALLET + 1% MUSEUM)</p>
                  </div>
               </div>
             </div>
@@ -222,7 +222,7 @@ export function Marketplace() {
               <div>
                 <div className="flex items-center gap-3 mb-2">
                   <span className="bg-pop-cyan px-3 py-1 text-xs font-black text-black brutal-border-sm italic">INSTANT_BUY</span>
-                  <span className="text-[10px] font-black uppercase opacity-50 tracking-widest">TRANSACTION_FEE: 25% (20% WALLET + 5% MUSEUM)</span>
+                  <span className="text-[10px] font-black uppercase opacity-50 tracking-widest">TRANSACTION_FEE: 21% (20% WALLET + 1% MUSEUM)</span>
                 </div>
                 <h2 className="text-7xl font-black italic tracking-tighter uppercase leading-none">Market_Grid</h2>
               </div>

@@ -7,7 +7,7 @@ import useImage from 'use-image';
 import { GoogleGenAI } from "@google/genai";
 import confetti from 'canvas-confetti';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
 export interface ShapeProps {
   id: string;
@@ -120,32 +120,51 @@ export function CanvasControl({ initialShapes, onSave, isSaving, importTemplate,
 
   useEffect(() => {
     if (importTemplate && containerSize.width > 0) {
-      // Logic to center the imported artifact
-      const width = Math.min(containerSize.width * 0.8, 400);
-      const height = width;
-      const x = (containerSize.width / 2) - (width / 2);
-      const y = (containerSize.height / 2) - (height / 2);
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = importTemplate.imageUrl;
+      img.onload = () => {
+        const stageW = containerSize.width;
+        const stageH = containerSize.height;
+        
+        let width = Math.min(stageW * 0.8, 400);
+        let height = width * (img.height / img.width);
+        
+        if (height > stageH * 0.8) {
+          height = stageH * 0.8;
+          width = height * (img.width / img.height);
+        }
 
-      const newShape: ShapeProps = {
-        id: `import-${Date.now()}`,
-        type: 'image',
-        x,
-        y,
-        width,
-        height,
-        imageSource: importTemplate.imageUrl,
-        fill: '#ffffff',
-        rotation: 0
+        const x = (stageW / 2) - (width / 2);
+        const y = (stageH / 2) - (height / 2);
+
+        const newShape: ShapeProps = {
+          id: `import-${Date.now()}`,
+          type: 'image',
+          x,
+          y,
+          width,
+          height,
+          imageSource: importTemplate.imageUrl,
+          fill: '#ffffff',
+          rotation: 0
+        };
+        setShapes(prev => [...prev, newShape]);
+        
+        // Auto-configure AI tools for the imported asset
+        if (importTemplate.suggestedStyle) {
+          setAiStyle(importTemplate.suggestedStyle);
+        }
+        setAiPrompt(`${importTemplate.title} in the style of ${importTemplate.author}`);
+        
+        onClearTemplate?.();
+        confetti({ 
+          particleCount: 100, 
+          spread: 70, 
+          origin: { y: 0.6 },
+          colors: ['#FFD700', '#00D1FF', '#FF00D6']
+        });
       };
-      setShapes(prev => [...prev, newShape]);
-      
-      onClearTemplate?.();
-      confetti({ 
-        particleCount: 100, 
-        spread: 70, 
-        origin: { y: 0.6 },
-        colors: ['#FFD700', '#00D1FF', '#FF00D6']
-      });
     }
   }, [importTemplate, containerSize]);
   const [aspectRatio, setAspectRatio] = useState<'square' | 'a4' | 'poster' | 'tiktok' | 'video' | 'banner'>('square');
@@ -202,7 +221,9 @@ export function CanvasControl({ initialShapes, onSave, isSaving, importTemplate,
   }, [aspectRatio]);
 
   useEffect(() => {
-    setShapes(initialShapes || []);
+    if (initialShapes && initialShapes.length > 0) {
+      setShapes(initialShapes);
+    }
   }, [initialShapes]);
 
   const addShape = (type: ShapeProps['type']) => {
@@ -275,14 +296,15 @@ export function CanvasControl({ initialShapes, onSave, isSaving, importTemplate,
     setIsAssisting(true);
     try {
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-1.5-flash",
         contents: `Refine this art prompt for a high-end neural art engine. Keep it concise but add artistic depth, lighting details, and technical complexity. Original prompt: "${aiPrompt}"`,
         config: {
           systemInstruction: "You are an expert prompt engineer for neural art generators. Your output should be a single, enhanced prompt string without commentary.",
         }
       });
-      if (response.text) {
-        setAiPrompt(response.text.replace(/^"|"$/g, '').trim());
+      const text = response.text || "";
+      if (text) {
+        setAiPrompt(text.replace(/^"|"$/g, '').trim());
         confetti({ particleCount: 30, colors: ['#FF00D6'], spread: 30 });
       }
     } catch (error) {
@@ -719,15 +741,36 @@ export function CanvasControl({ initialShapes, onSave, isSaving, importTemplate,
 
           <AnimatePresence>
             {selectedId && (
-              <motion.button
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.5 }}
-                onClick={deleteSelected}
-                className="w-10 h-10 bg-red-500 text-white border-2 border-black brutal-shadow-sm flex items-center justify-center hover:bg-red-600 transition-all active:translate-y-0.5 active:shadow-none"
-              >
-                <Trash2 size={20} />
-              </motion.button>
+              <div className="flex items-center gap-2">
+                {selectedShape?.type === 'image' && (
+                  <motion.button
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.5 }}
+                    onClick={() => {
+                      const link = document.createElement('a');
+                      link.href = selectedShape.imageSource || '';
+                      link.download = `cyberart-asset-${Date.now()}.png`;
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                    className="w-10 h-10 bg-pop-green text-black border-2 border-black brutal-shadow-sm flex items-center justify-center hover:bg-pop-pink transition-all active:translate-y-0.5 active:shadow-none"
+                    title="Download Asset"
+                  >
+                    <Download size={20} />
+                  </motion.button>
+                )}
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.5 }}
+                  onClick={deleteSelected}
+                  className="w-10 h-10 bg-red-500 text-white border-2 border-black brutal-shadow-sm flex items-center justify-center hover:bg-red-600 transition-all active:translate-y-0.5 active:shadow-none"
+                >
+                  <Trash2 size={20} />
+                </motion.button>
+              </div>
             )}
           </AnimatePresence>
         </div>

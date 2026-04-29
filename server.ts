@@ -17,7 +17,7 @@ async function startServer() {
     try {
       const { prompt } = req.body;
       const result = await ai.models.generateContent({
-        model: "gemini-2.0-flash",
+        model: "gemini-1.5-flash",
         contents: [{ role: "user", parts: [{ text: `You are a cyber-art director. Transform the following user prompt into a highly descriptive 'masterpiece' prompt for an AI image generator. Focus on vibrant colors, neo-brutalist textures, and synthwave aesthetics. Keep it short (max 30 words). Output ONLY the refined prompt text.\nUser: ${prompt}` }] }]
       });
       res.json({ refinedPrompt: result.text || prompt });
@@ -31,7 +31,7 @@ async function startServer() {
     try {
       const { prompt } = req.body;
       const result = await ai.models.generateContent({
-        model: "gemini-2.0-flash-lite-preview-02-05",
+        model: "gemini-1.5-flash",
         contents: [{ role: "user", parts: [{ text: `You are a quirky Pop-Art Creative Director named "The Fool". 
         A user has requested: "${prompt}". 
         Give them 3 weirdly creative, pop-art style names or descriptions for their art. 

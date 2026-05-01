@@ -16,10 +16,13 @@ import {
   Copy,
   Plus,
   Download,
-  Sparkles
+  Sparkles,
+  Lock,
+  ShieldAlert
 } from 'lucide-react';
-import { cn } from '@/src/lib/utils';
+import { cn } from '../lib/utils';
 import { auth } from '../lib/firebase';
+import { DigitalLocker } from './DigitalLocker';
 import confetti from 'canvas-confetti';
 
 interface ApiKey {
@@ -30,7 +33,7 @@ interface ApiKey {
   usage: number;
 }
 
-export function Dashboard({ initialTab = 'overview' }: { initialTab?: 'overview' | 'api' | 'docs' | 'license' | 'downloads' | 'profit' | 'sync' | 'trends' | 'nft' }) {
+export function Dashboard({ initialTab = 'overview', onEvolutionRemix }: { initialTab?: 'overview' | 'api' | 'docs' | 'license' | 'downloads' | 'profit' | 'sync' | 'trends' | 'nft' | 'locker' | 'admin_locker', onEvolutionRemix: (image: string, prompt: string) => void }) {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'refused'>('idle');
   const [trendReport, setTrendReport] = useState<any>(null);
@@ -149,6 +152,10 @@ export function Dashboard({ initialTab = 'overview' }: { initialTab?: 'overview'
           <TabButton active={activeTab === 'downloads'} onClick={() => setActiveTab('downloads')} icon={<Download size={18}/>} label="System_Asset_Downloads" />
           <TabButton active={activeTab === 'trends'} onClick={() => setActiveTab('trends')} icon={<Sparkles size={18} className="text-pop-yellow"/>} label="Neural_Trend_Engine" />
           <TabButton active={activeTab === 'nft'} onClick={() => setActiveTab('nft')} icon={<Zap size={18} className="text-pop-cyan"/>} label="NFT_Minting_Vault" />
+          <TabButton active={activeTab === 'locker'} onClick={() => setActiveTab('locker')} icon={<Lock size={18} className="text-pop-pink"/>} label="Digital_Locker" />
+          {user?.email === 'ellanovashenko@gmail.com' && (
+            <TabButton active={activeTab === 'admin_locker'} onClick={() => setActiveTab('admin_locker')} icon={<ShieldAlert size={18} className="text-pop-pink"/>} label="Admin_Locker" />
+          )}
           <TabButton active={activeTab === 'profit'} onClick={() => setActiveTab('profit')} icon={<Activity size={18}/>} label="Wealth_Metrics" />
           <TabButton active={activeTab === 'sync'} onClick={() => setActiveTab('sync')} icon={<RefreshCw size={18}/>} label="Archives_Sync" />
         </div>
@@ -433,6 +440,28 @@ export function Dashboard({ initialTab = 'overview' }: { initialTab?: 'overview'
                    </div>
                 </div>
               </motion.div>
+            )}
+
+            {activeTab === 'locker' && (
+               <motion.div
+                 key="locker"
+                 initial={{ opacity: 0, scale: 0.95 }}
+                 animate={{ opacity: 1, scale: 1 }}
+                 exit={{ opacity: 0, scale: 1.05 }}
+               >
+                 <DigitalLocker onEvolutionRemix={onEvolutionRemix} />
+               </motion.div>
+            )}
+
+            {activeTab === 'admin_locker' && user?.email === 'ellanovashenko@gmail.com' && (
+               <motion.div
+                 key="admin_locker"
+                 initial={{ opacity: 0, scale: 0.95 }}
+                 animate={{ opacity: 1, scale: 1 }}
+                 exit={{ opacity: 0, scale: 1.05 }}
+               >
+                 <DigitalLocker isAdminView onEvolutionRemix={onEvolutionRemix} />
+               </motion.div>
             )}
 
             {activeTab === 'profit' && (

@@ -1,6 +1,6 @@
 {
-  "name": "Cyber Art",
-  "description": "An AI-powered cyberpunk creation tool featuring interactive Konva.js canvas and futuristic creative suggestions.",
+  "name": "ArtCyber",
+  "description": "ArtCyber: A high-performance neural asset forge and secure digital locker for the next generation of creators.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }

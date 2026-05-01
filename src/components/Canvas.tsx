@@ -34,7 +34,7 @@ const URLLoadedImage = ({ shape, isSelected, onSelect, onChange, viewMode }: {
   onChange: (newAttrs: any) => void,
   viewMode: '2d' | '3d'
 }) => {
-  const [img] = useImage(shape.imageSource || '', 'anonymous');
+  const [img, status] = useImage(shape.imageSource || '', 'anonymous');
   const shapeRef = React.useRef<any>(null);
   const trRef = React.useRef<any>(null);
 
@@ -45,25 +45,97 @@ const URLLoadedImage = ({ shape, isSelected, onSelect, onChange, viewMode }: {
     }
   }, [isSelected]);
 
+  const getExtrusionOffsets = (depth: number = 0, tilt: number = 45) => {
+    const rad = (tilt * Math.PI) / 180;
+    return {
+      dx: Math.cos(rad) * depth,
+      dy: Math.sin(rad) * depth
+    };
+  };
+
+  const w = shape.width || 200;
+  const h = shape.height || 200;
+  const { dx, dy } = getExtrusionOffsets(shape.depth, shape.tilt);
+
+  if (status === 'failed') {
+    return (
+      <Group x={shape.x} y={shape.y} onClick={onSelect} onTap={onSelect} draggable={viewMode === '2d'}>
+        <Rect 
+          width={w} 
+          height={h} 
+          fill="#f3f4f6" 
+          stroke="red" 
+          strokeDash={[5, 5]} 
+        />
+        <Text 
+          text="IMAGE_LOAD_FAILED" 
+          fontSize={10} 
+          fontStyle="bold" 
+          fill="red" 
+          align="center" 
+          verticalAlign="middle"
+          width={w}
+          height={h}
+        />
+      </Group>
+    );
+  }
+
+  if (status === 'loading') {
+    return (
+      <Group x={shape.x} y={shape.y}>
+        <Rect 
+          width={w} 
+          height={h} 
+          fill="#f3f4f6" 
+          opacity={0.5} 
+        />
+        <Text 
+          text="LOADING_CORE..." 
+          fontSize={10} 
+          fontStyle="bold" 
+          fill="black" 
+          align="center" 
+          verticalAlign="middle"
+          width={w}
+          height={h}
+        />
+      </Group>
+    );
+  }
+
   return (
-    <React.Fragment>
+    <Group 
+      x={shape.x} 
+      y={shape.y} 
+      draggable={viewMode === '2d'}
+      onClick={onSelect}
+      onTap={onSelect}
+      onDragEnd={(e) => {
+        onChange({
+          x: e.target.x(),
+          y: e.target.y(),
+        });
+      }}
+    >
+      {shape.depth && shape.depth > 0 && (
+        <Group opacity={0.6}>
+          {/* Top side */}
+          <Line points={[0, 0, dx, dy, dx + w, dy, w, 0]} closed fill="black" opacity={0.2} />
+          {/* Left side */}
+          <Line points={[0, 0, dx, dy, dx, dy + h, 0, h]} closed fill="black" opacity={0.4} />
+          {/* Right side */}
+          <Line points={[w, 0, dx + w, dy, dx + w, dy + h, w, h]} closed fill="black" opacity={0.15} />
+          {/* Bottom side */}
+          <Line points={[0, h, dx, dy + h, dx + w, dy + h, w, h]} closed fill="black" opacity={0.5} />
+        </Group>
+      )}
       <KonvaImage
         image={img}
         id={shape.id}
-        x={shape.x}
-        y={shape.y}
-        width={shape.width || 200}
-        height={shape.height || 200}
-        draggable={viewMode === '2d'}
-        onClick={onSelect}
-        onTap={onSelect}
+        width={w}
+        height={h}
         ref={shapeRef}
-        onDragEnd={(e) => {
-          onChange({
-            x: e.target.x(),
-            y: e.target.y(),
-          });
-        }}
         onTransformEnd={() => {
           const node = shapeRef.current;
           const scaleX = node.scaleX();
@@ -71,13 +143,17 @@ const URLLoadedImage = ({ shape, isSelected, onSelect, onChange, viewMode }: {
           node.scaleX(1);
           node.scaleY(1);
           onChange({
-            x: node.x(),
-            y: node.y(),
             width: Math.max(5, node.width() * scaleX),
             height: Math.max(5, node.height() * scaleY),
           });
         }}
       />
+      {shape.is4K && (
+        <Group x={w - 25} y={5}>
+           <Rect width={20} height={10} fill="#00FF00" stroke="black" strokeWidth={1} />
+           <Text text="4K" fontSize={6} fontStyle="bold" x={6} y={2.5} fill="black" />
+        </Group>
+      )}
       {isSelected && (
         <Transformer
           ref={trRef}
@@ -89,7 +165,7 @@ const URLLoadedImage = ({ shape, isSelected, onSelect, onChange, viewMode }: {
           }}
         />
       )}
-    </React.Fragment>
+    </Group>
   );
 };
 

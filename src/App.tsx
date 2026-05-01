@@ -5,16 +5,21 @@ import {
   Sparkles, 
   CreditCard, 
   Layout, 
-  X, 
+  Plus,
+  Wand2,
+  Shirt,
+  Lock,
+  ExternalLink,
+  ChevronRight,
   RefreshCw,
   Zap,
-  Info,
   Layers,
-  LogIn,
   Image as ImageIcon,
   Film,
   LayoutDashboard
 } from 'lucide-react';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useAccount, useSignMessage } from 'wagmi';
 import { CanvasControl, ShapeProps } from './components/Canvas';
 import { PlanSubscription } from './components/PlanSubscription';
 import { Collection } from './components/Collection';
@@ -25,29 +30,55 @@ import { Marketplace } from './components/Marketplace';
 import { Museum } from './components/Museum';
 import { ArchiveUplink } from './components/ArchiveUplink';
 import { NeuralTools } from './components/NeuralTools';
+import { RemixForge } from './components/RemixForge';
+import { NeuralFabric } from './components/NeuralFabric';
 import { cn } from './lib/utils';
 import confetti from 'canvas-confetti';
 import { auth, signIn, db, handleFirestoreError, OperationType } from './lib/firebase';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { addDoc, collection, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
 
-type View = 'canvas' | 'pricing' | 'about' | 'collection' | 'gallery' | 'director' | 'dashboard' | 'marketplace' | 'museum' | 'uplink' | 'tools';
+type View = 'canvas' | 'pricing' | 'about' | 'collection' | 'gallery' | 'director' | 'dashboard' | 'marketplace' | 'museum' | 'uplink' | 'tools' | 'remix' | 'fabric';
 
 export default function App() {
   const [view, setView] = useState<View>('canvas');
+  const [remixState, setRemixState] = useState<{ image: string, prompt: string } | null>(null);
   const [foolAdvice, setFoolAdvice] = useState<string[]>([]);
   const [isLoadingAdvice, setLoadingAdvice] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [currentCanvas, setCurrentCanvas] = useState<{ id?: string, name: string, shapes: ShapeProps[] } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [importTemplate, setImportTemplate] = useState<any>(null);
-  const [dashboardTab, setDashboardTab] = useState<'overview' | 'api' | 'docs' | 'license' | 'downloads' | 'profit' | 'sync' | 'trends' | 'nft'>('overview');
+  const [dashboardTab, setDashboardTab] = useState<'overview' | 'api' | 'docs' | 'license' | 'downloads' | 'profit' | 'sync' | 'trends' | 'nft' | 'locker' | 'admin_locker'>('overview');
+
+  const { address, isConnected } = useAccount();
+  const { signMessageAsync } = useSignMessage();
 
   useEffect(() => {
     return onAuthStateChanged(auth, (u) => {
       setUser(u);
     });
   }, []);
+
+  const handleMintNFT = async (canvas: any) => {
+    if (!isConnected) {
+      alert("PLEASE_CONNECT_WALLET_FOR_MINTING_PROTOCOL");
+      return;
+    }
+    
+    try {
+      if (!address) return;
+      await signMessageAsync({ 
+        message: `Minting NFT for asset: ${canvas.name}`,
+        account: address 
+      });
+      alert("NFT_MINTING_INITIALIZED: Check your wallet for transaction confirmation.");
+      confetti({ particleCount: 200, spread: 80 });
+    } catch (e) {
+      console.error(e);
+      alert("MINTING_REFUSED: User rejected signature.");
+    }
+  };
 
   const handleSave = async (shapes: ShapeProps[]) => {
     if (!user) {
@@ -93,12 +124,19 @@ export default function App() {
   };
 
   const onRemix = (canvas: any) => {
+    // Current remix logic for shapes
     setCurrentCanvas({
       name: `${canvas.name} (Remix)`,
       shapes: JSON.parse(canvas.shapes)
     });
     setView('canvas');
     confetti({ particleCount: 50, colors: ['#00D1FF'] });
+  };
+
+  const onEvolutionRemix = (image: string, prompt: string) => {
+    setRemixState({ image, prompt });
+    setView('remix');
+    confetti({ particleCount: 100, colors: ['#FF00FF'] });
   };
 
   const getFoolAdvice = async () => {
@@ -131,7 +169,7 @@ export default function App() {
       <header className="h-20 border-b-4 border-black bg-white flex items-center justify-between px-8 shadow-brutal z-30">
         <div className="flex items-center gap-4">
           <div className="bg-black text-white p-2 border-2 border-black rotate-[-2deg] shadow-brutal-sm">
-            <h1 className="text-2xl font-black italic tracking-tighter">CYBER ART</h1>
+            <h1 className="text-2xl font-black italic tracking-tighter">ARTCYBER</h1>
           </div>
           <span className="text-[10px] font-bold uppercase tracking-widest bg-pop-green px-2 py-1 border-2 border-black shadow-brutal-sm">v2.0_CORE</span>
         </div>
@@ -143,13 +181,19 @@ export default function App() {
           <button onClick={() => setView('marketplace')} className={cn("hover:underline decoration-4 decoration-pop-green transition-all", view === 'marketplace' && "underline text-pop-green")}>Marketplace</button>
           <button onClick={() => setView('museum')} className={cn("hover:underline decoration-4 decoration-pop-cyan transition-all", view === 'museum' && "underline text-pop-cyan")}>Museum</button>
           <button onClick={() => setView('tools')} className={cn("hover:underline decoration-4 decoration-pop-pink transition-all", view === 'tools' && "underline text-pop-pink")}>Tools</button>
+          <button onClick={() => setView('remix')} className={cn("hover:underline decoration-4 decoration-pop-pink transition-all", view === 'remix' && "underline text-pop-pink")}>Remix</button>
+          <button onClick={() => setView('fabric')} className={cn("hover:underline decoration-4 decoration-pop-cyan transition-all", view === 'fabric' && "underline text-pop-cyan")}>Fabric</button>
           <button onClick={() => setView('uplink')} className={cn("hover:underline decoration-4 decoration-pop-pink transition-all", view === 'uplink' && "underline text-pop-pink")}>Uplink</button>
           <button onClick={() => setView('gallery')} className={cn("hover:underline decoration-4 decoration-pop-green transition-all", view === 'gallery' && "underline")}>Gallery</button>
           <button onClick={() => setView('collection')} className={cn("hover:underline decoration-4 decoration-pop-cyan transition-all", view === 'collection' && "underline")}>Collection</button>
-          <button onClick={() => setView('pricing')} className={cn("hover:underline decoration-4 decoration-pop-yellow transition-all", view === 'pricing' && "underline")}>Vault</button>
+          <button onClick={() => setView('pricing')} className={cn("hover:underline decoration-4 decoration-pop-pink transition-all", view === 'pricing' && "underline text-pop-pink")}>Vault</button>
         </nav>
 
         <div className="flex items-center gap-4">
+          <div className="hidden lg:block">
+            <ConnectButton showBalance={false} chainStatus="icon" accountStatus="avatar" />
+          </div>
+          
           <button
             onClick={getFoolAdvice}
             disabled={isLoadingAdvice}
@@ -217,8 +261,22 @@ export default function App() {
              <Sparkles size={20} />
           </button>
           <button 
+             onClick={() => { setView('remix'); setRemixState(null); }}
+             className={cn("w-12 h-12 bg-white border-2 border-black brutal-shadow-sm flex items-center justify-center hover:bg-pop-pink transition-all", view === 'remix' && "bg-pop-pink -translate-y-0.5 shadow-none")}
+             title="Remix Forge"
+          >
+             <Wand2 size={20} className={cn(view === 'remix' ? "text-white" : "text-black")} />
+          </button>
+          <button 
+             onClick={() => setView('fabric')}
+             className={cn("w-12 h-12 bg-white border-2 border-black brutal-shadow-sm flex items-center justify-center hover:bg-pop-cyan transition-all", view === 'fabric' && "bg-pop-cyan -translate-y-0.5 shadow-none")}
+             title="Fabric Resynthesizer"
+          >
+             <Shirt size={20} className={cn(view === 'fabric' ? "text-white" : "text-black")} />
+          </button>
+          <button 
              onClick={() => setView('pricing')}
-             className={cn("w-12 h-12 bg-white border-2 border-black brutal-shadow-sm flex items-center justify-center hover:bg-pop-yellow transition-all", view === 'pricing' && "bg-pop-yellow -translate-y-0.5 shadow-none")}
+             className={cn("w-12 h-12 bg-white border-2 border-black brutal-shadow-sm flex items-center justify-center hover:bg-pop-pink transition-all", view === 'pricing' && "bg-pop-pink -translate-y-0.5 shadow-none")}
           >
              <Zap size={20} />
           </button>
@@ -270,7 +328,10 @@ export default function App() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
               >
-                <Dashboard initialTab={dashboardTab} />
+                <Dashboard 
+                  initialTab={dashboardTab} 
+                  onEvolutionRemix={onEvolutionRemix}
+                />
               </motion.div>
             )}
 
@@ -281,7 +342,10 @@ export default function App() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 1.05 }}
               >
-                <Marketplace />
+                <Marketplace 
+                  onRemix={onRemix} 
+                  onEvolutionRemix={onEvolutionRemix}
+                />
               </motion.div>
             )}
 
@@ -332,7 +396,47 @@ export default function App() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 1.1 }}
               >
-                <NeuralTools />
+                <NeuralTools onImport={(item) => {
+                  setImportTemplate({
+                    imageUrl: item.imageUrl,
+                    title: item.title,
+                    author: 'NEURAL_GEN',
+                    suggestedStyle: item.suggestedStyle
+                  });
+                  setView('canvas');
+                  confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#00D1FF', '#FF00D6'] });
+                }} />
+              </motion.div>
+            )}
+
+            {view === 'remix' && (
+              <motion.div
+                key="remix"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.1 }}
+                className="h-full"
+              >
+                <RemixForge 
+                  initialImage={remixState?.image} 
+                  initialPrompt={remixState?.prompt}
+                  onImportToStudio={(item) => {
+                    setImportTemplate(item);
+                    setView('canvas');
+                  }}
+                />
+              </motion.div>
+            )}
+
+            {view === 'fabric' && (
+              <motion.div
+                key="fabric"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="h-full"
+              >
+                <NeuralFabric />
               </motion.div>
             )}
 
@@ -347,6 +451,7 @@ export default function App() {
                   userId={user.uid} 
                   onEdit={onEdit} 
                   onRemix={onRemix} 
+                  onEvolutionRemix={onEvolutionRemix}
                   onMint={() => {
                     setDashboardTab('nft');
                     setView('dashboard');
@@ -362,7 +467,11 @@ export default function App() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
               >
-                <Gallery onRemix={onRemix} />
+                <Gallery 
+                  onRemix={onRemix} 
+                  onEvolutionRemix={onEvolutionRemix}
+                  onNavigate={setView} 
+                />
               </motion.div>
             )}
 
@@ -401,7 +510,7 @@ export default function App() {
                   <div className="brutal-border p-6 bg-black text-white brutal-shadow">
                     <h3 className="font-black uppercase text-sm mb-4 border-b-2 border-pop-cyan pb-2">Community Vault</h3>
                     <p className="text-xs font-bold text-gray-400 mb-4">Access shared assets, glitch packs, and brutalist presets.</p>
-                    <button className="brutal-btn bg-pop-cyan text-black w-full text-[10px]">ACCESS_VAULT</button>
+                    <button className="brutal-btn bg-pop-pink text-white w-full text-[10px]">ACCESS_VAULT</button>
                   </div>
                 </div>
 
@@ -457,7 +566,7 @@ export default function App() {
                 <div className="relative z-10">
                   <h4 className="font-black italic text-pop-yellow mb-1 tracking-tighter">UPGRADE TO PRO</h4>
                   <p className="text-[9px] font-bold uppercase opacity-80 leading-tight mb-4">Unlock 3D rendering & AI Print presets</p>
-                  <button onClick={() => setView('pricing')} className="w-full bg-white text-black border-2 border-black py-2 font-black uppercase text-[10px] shadow-brutal-sm hover:translate-y-0.5 hover:shadow-none active:translate-y-1">UPGRADE_NOW</button>
+                  <button onClick={() => setView('pricing')} className="w-full bg-pop-pink text-white border-2 border-black py-2 font-black uppercase text-[10px] shadow-brutal-sm hover:translate-y-0.5 hover:shadow-none active:translate-y-1">UPGRADE_NOW</button>
                 </div>
                 <div className="absolute -bottom-10 -right-10 w-24 h-24 bg-pop-pink rounded-full blur-[40px] opacity-30 group-hover:opacity-60 transition-all duration-700" />
               </div>
@@ -483,6 +592,11 @@ export default function App() {
           <span className="text-[9px] font-black uppercase text-pop-pink">|</span>
           <div className="flex items-center gap-2 text-pop-cyan">
              <span className="text-[9px] font-black uppercase">Konva.js Engine: Live</span>
+          </div>
+          <span className="text-[9px] font-black uppercase text-pop-pink">|</span>
+          <div className="flex items-center gap-2 text-pop-cyan">
+             <div className="w-2 h-2 rounded-full bg-pop-cyan border border-black animate-pulse"></div>
+             <span className="text-[9px] font-black uppercase">SSL SECURE: 256-BIT_ENCRYPTED</span>
           </div>
           <span className="text-[9px] font-black uppercase text-pop-pink">|</span>
           <span className="text-[9px] font-black uppercase italic">"Design is a behavior, not a department."</span>

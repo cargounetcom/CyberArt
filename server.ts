@@ -2,6 +2,23 @@ import path from "path";
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
+import Stripe from "stripe";
+import axios from "axios";
+
+// Lazy initialize Stripe
+let stripe: Stripe | null = null;
+function getStripe() {
+  if (!stripe) {
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key) {
+      console.warn("STRIPE_SECRET_KEY is missing. Payment features will fail.");
+    }
+    stripe = new Stripe(key || "sk_test_placeholder", {
+      apiVersion: "2025-01-27.acacia" as any,
+    });
+  }
+  return stripe;
+}
 
 async function startServer() {
   const app = express();
@@ -46,6 +63,66 @@ async function startServer() {
     } catch (error) {
       console.error("Fool Error:", error);
       res.status(500).json({ error: "The Fool is currently confused." });
+    }
+  });
+
+  // Stripe Checkout
+  app.post("/api/create-checkout-session", async (req, res) => {
+    try {
+      const { planId, successUrl, cancelUrl } = req.body;
+      const stripeClient = getStripe();
+      
+      let amount = 2900; // Default fallback
+      if (planId === 'api') amount = 500;
+      else if (planId === 'individual') amount = 1000;
+      else if (planId === 'commercial') amount = 10000;
+      else if (planId === 'enterprise') amount = 9900;
+
+      const session = await stripeClient.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: [
+          {
+            price_data: {
+              currency: "eur",
+              product_data: {
+                name: planId.toUpperCase() + " Plan",
+              },
+              unit_amount: amount,
+            },
+            quantity: 1,
+          },
+        ],
+        mode: "payment",
+        success_url: successUrl || `${process.env.APP_URL}/success`,
+        cancel_url: cancelUrl || `${process.env.APP_URL}/cancel`,
+      });
+
+      res.json({ id: session.id, url: session.url });
+    } catch (error) {
+      console.error("Stripe Error:", error);
+      res.status(500).json({ error: "Failed to create checkout session" });
+    }
+  });
+
+  // Printful Integration Proxy
+  app.post("/api/printful/orders", async (req, res) => {
+    const PRINTFUL_API_KEY = process.env.PRINTFUL_API_KEY;
+    if (!PRINTFUL_API_KEY) {
+      return res.status(500).json({ error: "PRINTFUL_API_KEY missing" });
+    }
+
+    try {
+      // Forward the order to Printful
+      const response = await axios.post("https://api.printful.com/orders", req.body, {
+        headers: {
+          'Authorization': `Bearer ${PRINTFUL_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      res.json(response.data);
+    } catch (error: any) {
+      console.error("Printful Error:", error.response?.data || error.message);
+      res.status(error.response?.status || 500).json(error.response?.data || { error: "Printful order failed" });
     }
   });
 

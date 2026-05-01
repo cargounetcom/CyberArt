@@ -6,6 +6,7 @@ import { fetchMetObjects, searchMetObjects, MetObject } from '../services/metSer
 import { fetchChicagoObjects, searchChicagoObjects, getChicagoImageUrl, ChicagoObject } from '../services/chicagoService';
 import { fetchClevelandObjects, searchClevelandObjects, ClevelandObject } from '../services/clevelandService';
 import { fetchEuropeanaObjects, searchEuropeanaObjects, EuropeanaObject } from '../services/europeanaService';
+import { fetchTateObjects, searchTateObjects, TateObject } from '../services/tateService';
 
 interface ArchiveItem {
   id: string;
@@ -19,7 +20,7 @@ interface ArchiveItem {
   externalUrl?: string;
 }
 
-type ArchiveSourceType = 'MET' | 'CHICAGO' | 'CLEVELAND' | 'EUROPEANA';
+type ArchiveSourceType = 'MET' | 'CHICAGO' | 'CLEVELAND' | 'EUROPEANA' | 'TATE';
 
 export function ArchiveUplink({ onImport }: { onImport: (item: ArchiveItem) => void }) {
   const [search, setSearch] = useState('');
@@ -33,13 +34,55 @@ export function ArchiveUplink({ onImport }: { onImport: (item: ArchiveItem) => v
     handleFetchInitial('MET');
   }, []);
 
-  const handleSearch = async () => {
-    if (!search.trim()) return;
+  const handleSearch = async (queryOverride?: string) => {
+    const query = queryOverride || search;
+    if (!query.trim()) return;
     setIsSearching(true);
     try {
       let items: ArchiveItem[] = [];
+      
+      // Inject Special Virtual SKUs
+      const specialSKUs: ArchiveItem[] = [
+        {
+          id: 'field-journal-tate-1936',
+          title: 'Field Journal: Archbold 1936 New Guinea Exp',
+          author: 'Tate, G. H. H. (George Henry Hamilton)',
+          year: '1936',
+          institution: 'ARCHBOLD_EXPEDITIONS',
+          thumbnail: 'https://pollinations.ai/p/vintage%20handwritten%20field%20journal%20sketchbook%20open%20on%20a%20wooden%20desk%20magnifying%20glass%20sepia%20scientific%20notes?width=512&height=512&seed=8821&nologo=true',
+          category: 'FIELD_ARCHIVE'
+        },
+        {
+          id: 'remix-vangogh-cyber-2',
+          title: 'VAN_GOGH_CYBER_SKU_02',
+          author: 'VINCENT_VAN_GOGH',
+          year: '2026_AI_CORE',
+          institution: 'VIRTUAL_MARKET',
+          thumbnail: 'https://pollinations.ai/p/Sunflowers%20remix%20neon%20circuitry%20glowing%20petals%20cyberpunk?width=512&height=512&seed=3312&nologo=true',
+          category: 'NEURAL_REMIX'
+        },
+        {
+          id: 'remix-vangogh-cyber-3',
+          title: 'VAN_GOGH_CYBER_SKU_03',
+          author: 'VINCENT_VAN_GOGH',
+          year: '2026_AI_CORE',
+          institution: 'VIRTUAL_MARKET',
+          thumbnail: 'https://pollinations.ai/p/Van%20Gogh%20self-portrait%20remix%20cyber%20implants%20neon%20brushstrokes?width=512&height=512&seed=4412&nologo=true',
+          category: 'NEURAL_REMIX'
+        }
+      ];
+
+      const searchLower = query.toLowerCase();
+      const filteredSKUs = specialSKUs.filter(sku => 
+        sku.title.toLowerCase().includes(searchLower) || 
+        sku.author.toLowerCase().includes(searchLower) ||
+        searchLower.includes('cyber') ||
+        searchLower.includes('gogh') ||
+        searchLower.includes('sku')
+      );
+
       if (activeSource === 'MET') {
-        const raw = await searchMetObjects(search, 12);
+        const raw = await searchMetObjects(query, 12);
         items = raw.map(obj => ({
           id: `met-${obj.objectID}`,
           title: obj.title,
@@ -51,7 +94,7 @@ export function ArchiveUplink({ onImport }: { onImport: (item: ArchiveItem) => v
           externalUrl: obj.objectURL
         }));
       } else if (activeSource === 'CHICAGO') {
-        const raw = await searchChicagoObjects(search, 12);
+        const raw = await searchChicagoObjects(query, 12);
         items = raw.map(obj => ({
           id: `chi-${obj.id}`,
           title: obj.title,
@@ -63,7 +106,7 @@ export function ArchiveUplink({ onImport }: { onImport: (item: ArchiveItem) => v
           externalUrl: `https://www.artic.edu/artworks/${obj.id}`
         }));
       } else if (activeSource === 'CLEVELAND') {
-        const raw = await searchClevelandObjects(search, 12);
+        const raw = await searchClevelandObjects(query, 12);
         items = raw.map(obj => ({
           id: `cle-${obj.id}`,
           title: obj.title,
@@ -75,19 +118,31 @@ export function ArchiveUplink({ onImport }: { onImport: (item: ArchiveItem) => v
           externalUrl: `https://www.clevelandart.org/art/${obj.id}`
         }));
       } else if (activeSource === 'EUROPEANA') {
-        const raw = await searchEuropeanaObjects(search, 12);
+        const raw = await searchEuropeanaObjects(query, 12);
         items = raw.map(obj => ({
           id: `eur-${obj.id}`,
           title: obj.title?.[0] || 'UNTITLED',
           author: obj.dcCreator?.[0] || 'UNKNOWN',
           year: obj.year?.[0] || 'N/A',
           institution: 'EUROPEANA_EU',
-          thumbnail: obj.edmPreview?.[0] || '',
+          thumbnail: obj.edmPreview?.[0] || obj.edmIsShownBy?.[0] || '',
           category: 'HERITAGE',
           externalUrl: `https://www.europeana.eu/record/${obj.id}`
         }));
+      } else if (activeSource === 'TATE') {
+        const raw = await searchTateObjects(query, 12);
+        items = raw.map(obj => ({
+          id: `tate-${obj.id}`,
+          title: obj.title?.[0] || 'UNTITLED',
+          author: obj.dcCreator?.[0] || 'TATE_COLLECTION',
+          year: obj.year?.[0] || 'N/A',
+          institution: 'TATE_BRITAIN',
+          thumbnail: obj.edmPreview?.[0] || obj.edmIsShownBy?.[0] || '',
+          category: 'BRITISH_ARCHIVE',
+          externalUrl: `https://www.europeana.eu/record/${obj.id}`
+        }));
       }
-      setResults(items.filter(i => i.thumbnail));
+      setResults([...filteredSKUs, ...items.filter(i => i.thumbnail)]);
     } finally {
       setIsSearching(false);
     }
@@ -142,8 +197,20 @@ export function ArchiveUplink({ onImport }: { onImport: (item: ArchiveItem) => v
                 author: obj.dcCreator?.[0] || 'UNKNOWN',
                 year: obj.year?.[0] || 'N/A',
                 institution: 'EUROPEANA_EU',
-                thumbnail: obj.edmPreview?.[0] || '',
+                thumbnail: obj.edmPreview?.[0] || obj.edmIsShownBy?.[0] || '',
                 category: 'HERITAGE',
+                externalUrl: `https://www.europeana.eu/record/${obj.id}`
+            }));
+        } else if (source === 'TATE') {
+            const raw = await fetchTateObjects(12);
+            items = raw.map(obj => ({
+                id: `tate-${obj.id}`,
+                title: obj.title?.[0] || 'UNTITLED',
+                author: obj.dcCreator?.[0] || 'TATE_COLLECTION',
+                year: obj.year?.[0] || 'N/A',
+                institution: 'TATE_BRITAIN',
+                thumbnail: obj.edmPreview?.[0] || obj.edmIsShownBy?.[0] || '',
+                category: 'BRITISH_ARCHIVE',
                 externalUrl: `https://www.europeana.eu/record/${obj.id}`
             }));
         }
@@ -163,9 +230,9 @@ export function ArchiveUplink({ onImport }: { onImport: (item: ArchiveItem) => v
               <Globe className="text-pop-cyan animate-pulse" size={24} />
               <span className="text-[10px] font-black uppercase tracking-widest text-pop-cyan">GLOBAL_UPLINK: MULTI_MUSEUM_SYNC_ACTIVE</span>
            </div>
-           <h2 className="leading-none mb-4 uppercase italic">ArtRemix_Library_Sync</h2>
+           <h2 className="leading-none mb-4 uppercase italic font-display">ArtCyber_Library_Sync</h2>
             <div className="flex flex-wrap gap-4 mb-4">
-               {(['MET', 'CHICAGO', 'CLEVELAND', 'EUROPEANA'] as ArchiveSourceType[]).map(src => (
+               {(['MET', 'CHICAGO', 'CLEVELAND', 'EUROPEANA', 'TATE'] as ArchiveSourceType[]).map(src => (
                   <button 
                     key={src}
                     onClick={() => {
@@ -203,6 +270,20 @@ export function ArchiveUplink({ onImport }: { onImport: (item: ArchiveItem) => v
                 </div>
                 <span className="text-[8px] font-black uppercase text-pop-cyan">POLE_SIGNAL: {(connectedSources.size / 5) * 100}%</span>
             </div>
+            <div className="flex flex-wrap gap-2 mb-6">
+               {['Claude Monet', 'Vincent van Gogh', 'Camille Pissarro', 'Impressionism', 'Post-Impressionism', 'Modernism', 'Realism', 'Romanticism', 'European Art'].map(tag => (
+                  <button
+                    key={tag}
+                    onClick={() => {
+                      setSearch(tag);
+                      handleSearch(tag);
+                    }}
+                    className="px-3 py-1 bg-white/10 hover:bg-pop-yellow hover:text-black brutal-border-sm text-[8px] font-black uppercase transition-all"
+                  >
+                    {tag}
+                  </button>
+               ))}
+            </div>
             <div className="relative group max-w-2xl">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30 group-hover:text-pop-yellow transition-colors" size={20} />
               <input 
@@ -214,7 +295,7 @@ export function ArchiveUplink({ onImport }: { onImport: (item: ArchiveItem) => v
                 className="w-full pl-12 pr-12 py-5 bg-white text-black brutal-border font-black text-lg italic uppercase outline-none focus:bg-pop-yellow transition-colors"
               />
               <button 
-                onClick={handleSearch}
+                onClick={() => handleSearch()}
                 className="absolute right-2 top-1/2 -translate-y-1/2 brutal-btn-sm bg-black text-white px-6 h-10 hover:bg-pop-pink"
               >
                 {isSearching ? <RefreshCw className="animate-spin" size={16} /> : 'CONNECT_POINTS'}
@@ -277,7 +358,7 @@ export function ArchiveUplink({ onImport }: { onImport: (item: ArchiveItem) => v
 
       {/* Bottom Stats */}
       <div className="brutal-border p-10 bg-gray-50 border-t-8 border-black">
-         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
+         <div className="grid grid-cols-1 md:grid-cols-5 gap-8 text-center">
             <div className="space-y-1">
                <p className="text-[10px] font-black opacity-40 uppercase">MET_NODES</p>
                <p className="text-2xl font-black italic">406,291</p>
@@ -293,6 +374,10 @@ export function ArchiveUplink({ onImport }: { onImport: (item: ArchiveItem) => v
             <div className="space-y-1">
                <p className="text-[10px] font-black opacity-40 uppercase">EUROPEANA_NODES</p>
                <p className="text-2xl font-black italic text-pop-cyan">58M+</p>
+            </div>
+            <div className="space-y-1">
+               <p className="text-[10px] font-black opacity-40 uppercase">TATE_NODES</p>
+               <p className="text-2xl font-black italic text-pop-pink">78K+</p>
             </div>
          </div>
       </div>

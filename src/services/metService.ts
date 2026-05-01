@@ -21,15 +21,16 @@ export async function fetchMetObjects(limit: number = 10): Promise<MetObject[]> 
       return [];
     }
 
-    const objectIDs = searchData.objectIDs.slice(0, limit);
+    const objectIDs = searchData.objectIDs.slice(0, 40); // Increased candidate pool
 
     const promises = objectIDs.map(async (id: number) => {
       const detailRes = await fetch(`${BASE_URL}/objects/${id}`);
       return detailRes.json();
     });
 
-    const results = await Promise.all(promises);
-    return results.filter(obj => obj.primaryImageSmall);
+    const allResults = await Promise.all(promises);
+    const withImages = allResults.filter(obj => obj.primaryImageSmall);
+    return withImages.slice(0, limit);
   } catch (error) {
     console.error('Error fetching Met objects:', error);
     return [];
@@ -45,15 +46,21 @@ export async function searchMetObjects(query: string, limit: number = 10): Promi
         return [];
       }
   
-      const objectIDs = searchData.objectIDs.slice(0, limit);
+      const objectIDs = searchData.objectIDs.slice(0, 100); // Drastically increased candidate pool for better image hit rate
   
       const promises = objectIDs.map(async (id: number) => {
-        const detailRes = await fetch(`${BASE_URL}/objects/${id}`);
-        return detailRes.json();
+        try {
+          const detailRes = await fetch(`${BASE_URL}/objects/${id}`);
+          if (!detailRes.ok) return null;
+          return await detailRes.json();
+        } catch (e) {
+          return null;
+        }
       });
   
-      const results = await Promise.all(promises);
-      return results.filter(obj => obj.primaryImageSmall);
+      const allResults = await Promise.all(promises);
+      const withImages = allResults.filter(obj => obj && obj.primaryImageSmall);
+      return withImages.slice(0, limit);
     } catch (error) {
       console.error('Error searching Met objects:', error);
       return [];

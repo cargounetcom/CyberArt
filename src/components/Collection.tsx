@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { collection, query, where, getDocs, orderBy, deleteDoc, doc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '@/src/lib/firebase';
 import { motion } from 'motion/react';
-import { Trash2, Edit3, Layers, RefreshCw, ShoppingCart, Check, FileText } from 'lucide-react';
-import { cn } from '@/src/lib/utils';
+import { Trash2, Edit3, Layers, RefreshCw, ShoppingCart, Check, FileText, Truck } from 'lucide-react';
+import { cn } from '../lib/utils';
 import confetti from 'canvas-confetti';
-import { generateCertificate } from '@/src/lib/certificate';
+import { generateCertificate } from '../lib/certificate';
 
 interface CanvasData {
   id: string;
@@ -19,14 +19,40 @@ interface CollectionProps {
   userId: string;
   onEdit: (canvas: CanvasData) => void;
   onRemix: (canvas: CanvasData) => void;
+  onEvolutionRemix: (image: string, prompt: string) => void;
   onMint: (canvas: CanvasData) => void;
 }
 
-export function Collection({ userId, onEdit, onRemix, onMint }: CollectionProps) {
+export function Collection({ userId, onEdit, onRemix, onEvolutionRemix, onMint }: CollectionProps) {
   const [canvases, setCanvases] = useState<CanvasData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isShipping, setIsShipping] = useState<string | null>(null);
 
   const [listedIds, setListedIds] = useState<Set<string>>(new Set());
+
+  const handleShipToPrint = async (canvas: CanvasData) => {
+    setIsShipping(canvas.id);
+    try {
+      const response = await fetch('/api/printful/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipient: {
+            name: "Brutal Art Fan",
+            address1: "123 Cyber Way",
+            city: "Neo Tokyo"
+          },
+          items: [{ name: `Brutal Canvas: ${canvas.name}`, quantity: 1 }]
+        })
+      });
+      alert("SHIPMENT_PROTOCOL_INITIATED: Your art has been sent to Printful production.");
+      confetti({ particleCount: 150, spread: 80 });
+    } catch (e) {
+      alert("SHIPMENT_ERROR: Production line failure.");
+    } finally {
+      setIsShipping(null);
+    }
+  };
 
   const handleList = (id: string) => {
     setListedIds(prev => {
@@ -130,6 +156,12 @@ export function Collection({ userId, onEdit, onRemix, onMint }: CollectionProps)
                       REMIX
                     </button>
                     <button
+                      onClick={() => onEvolutionRemix('', canvas.name)}
+                      className="brutal-btn bg-pop-green text-black text-[10px]"
+                    >
+                      EVOLVE
+                    </button>
+                    <button
                       onClick={() => handleList(canvas.id)}
                       disabled={listedIds.has(canvas.id)}
                       className={cn(
@@ -145,6 +177,14 @@ export function Collection({ userId, onEdit, onRemix, onMint }: CollectionProps)
                       className="brutal-btn bg-pop-cyan text-black text-[10px]"
                     >
                       MINT_NFT
+                    </button>
+                    <button
+                      onClick={() => handleShipToPrint(canvas)}
+                      disabled={isShipping === canvas.id}
+                      className="brutal-btn bg-pop-yellow text-black text-[10px] flex items-center gap-1"
+                    >
+                      {isShipping === canvas.id ? <RefreshCw size={12} className="animate-spin" /> : <Truck size={12} />}
+                      SHIP_PRINT
                     </button>
                     <button
                       onClick={() => generateCertificate({

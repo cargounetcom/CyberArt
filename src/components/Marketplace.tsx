@@ -89,7 +89,37 @@ function LiveFeed() {
   );
 }
 
-export function Marketplace() {
+const PREVIEW_ITEMS: Collectible[] = [
+  {
+    id: 'preview-vangogh-2',
+    title: 'VAN_GOGH_CYBER_SKU_02',
+    author: 'VINCENT_VAN_GOGH',
+    price: 1250,
+    imageUrl: 'https://pollinations.ai/p/Sunflowers%20remix%20neon%20circuitry%20glowing%20petals%20cyberpunk?width=1024&height=1024&seed=3312&nologo=true',
+    category: 'REMIX',
+    likes: 842,
+    ownerId: 'system',
+    itemType: 'sale'
+  },
+  {
+    id: 'preview-vangogh-3',
+    title: 'VAN_GOGH_CYBER_SKU_03',
+    author: 'VINCENT_VAN_GOGH',
+    price: 3400,
+    imageUrl: 'https://pollinations.ai/p/Van%20Gogh%20self-portrait%20remix%20cyber%20implants%20neon%20brushstrokes?width=1024&height=1024&seed=4412&nologo=true',
+    category: 'REMIX',
+    likes: 1205,
+    ownerId: 'system',
+    itemType: 'sale'
+  }
+];
+
+interface MarketplaceProps {
+  onRemix?: (canvas: any) => void;
+  onEvolutionRemix?: (image: string, prompt: string) => void;
+}
+
+export function Marketplace({ onRemix, onEvolutionRemix }: MarketplaceProps) {
   const [items, setItems] = useState<Collectible[]>([]);
   const [filter, setFilter] = useState<'ALL' | 'GENESIS' | 'REMIX' | 'GLITCH'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -107,10 +137,14 @@ export function Marketplace() {
     const q = query(collection(db, 'marketplace'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Collectible));
-      setItems(docs);
+      // Combine with preview items to ensure something is always there for testing
+      setItems([...PREVIEW_ITEMS, ...docs]);
       setLoading(false);
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, 'marketplace');
+      // If Firestore fails (e.g. no internet/offline), still show preview items
+      setItems(PREVIEW_ITEMS);
+      setLoading(false);
     });
     return () => unsubscribe();
   }, []);
@@ -318,23 +352,62 @@ export function Marketplace() {
                           </div>
                         </div>
 
-                        <div className="mt-auto pt-4 border-t border-black/10 flex items-center justify-between">
-                          <div>
-                             <p className="text-[10px] font-black uppercase opacity-50">List_Price</p>
-                             <div className="flex items-center gap-1">
-                                <span className="text-2xl font-black italic tracking-tighter">€{item.price.toLocaleString()}</span>
-                                <span className="bg-pop-yellow px-1 py-0.5 text-[8px] font-black border border-black">NET_PAY</span>
-                             </div>
+                        <div className="mt-auto pt-4 border-t border-black/10 flex flex-col gap-2">
+                          <div className="flex gap-2">
+                            <button 
+                              disabled={item.isSold}
+                              onClick={() => onRemix?.({
+                                id: item.id,
+                                name: item.title,
+                                shapes: JSON.stringify([{
+                                  id: `market-${Date.now()}`,
+                                  type: 'image',
+                                  x: 50,
+                                  y: 50,
+                                  width: 400,
+                                  height: 400,
+                                  fill: 'transparent',
+                                  rotation: 0,
+                                  imageSource: item.imageUrl,
+                                  depth: 30,
+                                  tilt: 45
+                                }])
+                              })}
+                              className={cn(
+                                "flex-1 brutal-btn-sm h-12 flex items-center justify-center gap-2",
+                                item.isSold ? "bg-gray-400 cursor-not-allowed" : "bg-pop-green hover:bg-pop-yellow"
+                              )}
+                              title="Remix in Studio"
+                            >
+                               <Sparkles size={16} />
+                               STUDIO
+                            </button>
+                            <button 
+                              disabled={item.isSold}
+                              onClick={() => onEvolutionRemix?.(item.imageUrl, item.title)}
+                              className={cn(
+                                "flex-1 brutal-btn-sm h-12 flex items-center justify-center gap-2",
+                                item.isSold ? "bg-gray-400 cursor-not-allowed" : "bg-pop-pink text-white hover:bg-pop-cyan"
+                              )}
+                              title="Remix in AI Forge"
+                            >
+                               <GitBranch size={16} />
+                               FORGE
+                            </button>
                           </div>
                           <button 
                             disabled={item.isSold}
                             className={cn(
-                              "brutal-btn-sm h-12 px-6 flex items-center gap-2",
-                              item.isSold ? "bg-gray-400 cursor-not-allowed" : "bg-pop-green hover:bg-pop-yellow"
+                              "w-full brutal-btn-sm h-12 flex items-center justify-center gap-2",
+                              item.isSold ? "bg-gray-400 cursor-not-allowed" : "bg-black text-white hover:bg-pop-yellow hover:text-black"
                             )}
                           >
-                            {item.isSold ? <Lock size={16}/> : <ShoppingCart size={16}/>}
-                            {item.isSold ? 'LOCKED' : 'ACQUIRE'}
+                            {item.isSold ? <Lock size={16}/> : (
+                              <>
+                                <ShoppingCart size={16}/>
+                                <span>€{item.price.toLocaleString()}</span>
+                              </>
+                            )}
                           </button>
                         </div>
                       </div>

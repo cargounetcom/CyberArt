@@ -6,6 +6,7 @@ import { fetchMetObjects, searchMetObjects, MetObject } from '../services/metSer
 import { fetchChicagoObjects, searchChicagoObjects, getChicagoImageUrl, ChicagoObject } from '../services/chicagoService';
 import { fetchClevelandObjects, searchClevelandObjects, ClevelandObject } from '../services/clevelandService';
 import { fetchEuropeanaObjects, searchEuropeanaObjects, EuropeanaObject } from '../services/europeanaService';
+import { fetchTateObjects, searchTateObjects, TateObject } from '../services/tateService';
 
 interface MuseumArtifact {
   id: string;
@@ -17,10 +18,9 @@ interface MuseumArtifact {
   donationStatus: 'RESTORING' | 'PRESERVED' | 'DIGITIZING' | 'NEURAL_REMIX' | 'LIVE_UPLINK';
   description: string;
   suggestedStyle?: string;
-  externalUrl?: string;
 }
 
-type MuseumSourceType = 'MET' | 'CHICAGO' | 'CLEVELAND' | 'EUROPEANA';
+type MuseumSourceType = 'MET' | 'CHICAGO' | 'CLEVELAND' | 'EUROPEANA' | 'TATE';
 
 interface MuseumProps {
   onImport?: (artifact: { imageUrl: string, title: string, author: string, suggestedStyle?: string }) => void;
@@ -31,7 +31,6 @@ export function Museum({ onImport }: MuseumProps) {
   const [isOrdering, setIsOrdering] = useState(false);
   const [orderMaterial, setOrderMaterial] = useState<'PAPER' | 'CANVAS'>('PAPER');
   const [orderSize, setOrderSize] = useState<'small' | 'medium' | 'large' | 'extra_large'>('medium');
-  const [isFramed, setIsFramed] = useState(false);
   const [isZoomed, setIsZoomed] = useState(false);
   const [checkoutStep, setCheckoutStep] = useState<'CONFIG' | 'PAYMENT' | 'PROCESSING'>('CONFIG');
   const [paymentMethod, setPaymentMethod] = useState<'WALLET' | 'CARD' | 'CREDITS'>('WALLET');
@@ -39,20 +38,52 @@ export function Museum({ onImport }: MuseumProps) {
   const [apiArtifacts, setApiArtifacts] = useState<MuseumArtifact[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [activeSource, setActiveSource] = useState<MuseumSourceType>('MET');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState('Impressionism');
   const [points, setPoints] = useState(0);
   const [connectedSources, setConnectedSources] = useState<Set<MuseumSourceType>>(new Set(['MET']));
 
   const COLLECTIONS = [
-    'Abstract', 'American', 'Art Deco', 'Cartography', 'Collages', 'Drawings', 
-    'Harlem Renaissance', 'Hudson River School', 'Illustrations', 'Impressionism', 
-    'Mid Century', 'Modernism', 'Paintings', 'Photography', 'Pop Art', 
-    'Post-Impressionism', 'Prints', 'Realism', 'Romanticism', 'Watercolors'
+    'Impressionism', 'Post-Impressionism', 'Impressionism & Post-Impressionism', 
+    'European Art', 'Modernism', 'Realism', 'Romanticism', 'Abstract', 'American', 
+    'Art Deco', 'Cartography', 'Collages', 'Drawings', 'Harlem Renaissance', 
+    'Hudson River School', 'Illustrations', 'Mid Century', 'Paintings', 'Photography', 
+    'Pop Art', 'Prints', 'Watercolors'
   ];
 
   const AUTHORS = [
-    'Van Gogh', 'Monet', 'Hokusai', 'Rembrandt', 'Degas', 'Cezanne', 'Renoir', 
-    'Sargent', 'Homer', 'Bearden', 'Cassatt', 'O\'Keeffe', 'Rivera', 'Kandinsky'
+    'Claude Monet', 'Vincent van Gogh', 'Camille Pissarro',
+    'Abrams, Willie "Ma Willie"', 'After José Guadalupe Posada', 'After Sydenham Teak Edwards', 
+    'Alston, Charles Henry', 'American', 'Armstrong, Margaret Neilson', 'Armstrong, Neil', 
+    'Audubon, After John James', 'Barbier, George', 'Bartholomé, Albert', 'Bastien-Lepage, Jules', 
+    'Bearden, Romare', 'Bendolph, Annie', 'Bénedictus, Edouard', 'Bennett, Linda Diane', 
+    'Bierstadt, Albert', 'Bird, Elisha Brown', 'Bonnard, Pierre', 'Bradley, Will H.', 
+    'Brown, Jr., Samuel Joseph', 'Burne-Jones, Sir Edward', 'Caillebotte, Gustave', 
+    'Carrington, Leonora', 'Cassatt, Mary', 'Cézanne, Paul', 'Charlot, Jean', 'Cole, Thomas', 
+    'Cot, Pierre-Auguste', 'Courbet, Gustave', 'Cox, Charles Arthur', 'Currier And Ives', 
+    'Dalí, Salvador', 'David, Jacques Louis', 'Davis, Stuart', 'Degas, Edgar', 'Delacroix, Eugène', 
+    'Delaunay, Sonia', 'Demuth, Charles', 'Denis, Simon', 'Detroit Publishing Company', 
+    'Douglas, Aaron', 'Dürer, Albrecht', 'Egyptian Artist, Unknown', 'Fox, Charles', 
+    'French (cartoon) - South Netherlandish (woven)', 'French, 19th Century', 'Friedrich, Caspar David', 
+    'Gainsborough, Thomas', 'Gauguin, Paul', 'Gérôme, Jean-Léon', 'Gris, Juan', 'Hassam, Childe', 
+    'Haverman, Margareta', 'Henri, Robert', 'Hiroshige, Utagawa', 'Hokusai, Katsushika', 'Homer, Winslow', 
+    'Hooker, William Jackson', 'Hopper, Edward', 'Ingres, Jean Auguste Dominique', 
+    'Issued By Gordon Bread Company', 'Johnson, William H.', 'Kandinsky, Vasily', 'Kennedy, Nettie Jane', 
+    'Klee, Paul', 'Klimt, Gustav', 'Lawrence, Jacob', 'Le Brun, Elisabeth Louise Vigée', 
+    'Ledesma, Gabriel Fernández', 'Leutze, Emanuel', 'Light, Joe', 'Louis Prang And Co.', 
+    'Mahavihara Master', 'Major, A.', 'Manet, Edouard', 'Manilla, Manuel', 'Mansfield, Blanche McManus', 
+    'Martinet, François Nicolas', 'Matisse, Henri', 'Méndez, Leopoldo', 'Mérida, Carlos', 
+    'Mexican Artist, Unidentified', 'Miró, Joan', 'Modigliani, Amedeo', 'Monet, Claude', 
+    'Morisot, Berthe', 'Morris, William', 'Naya, Carlo', 'O\'Keeffe, Georgia', 'Olds, Elizabeth', 
+    'Penfield, Edward', 'Pettway, Lucy T.', 'Pippin, Horace', 'Piranesi, Giovanni Battista', 
+    'Pissarro, Camille', 'Poiret, Paul', 'Posada, José Guadalupe', 'Raleigh, Henry Patrick', 
+    'Ramírez, Everardo', 'Raphael', 'Ray, Man', 'Redon, Odilon', 'Regenfuss, Franz Michael', 
+    'Rembrandt Van Rijn', 'Renoir, Auguste', 'Ringgold, Faith', 'Rivera, Diego', 'Rothko, Mark', 
+    'Rousseau, Henri', 'Rowe, Nellie Mae', 'Sargent, John Singer', 'Say, William', 'Séguy, Emile-Allain', 
+    'Seurat, Georges', 'Sisley, Alfred', 'Sloan, John', 'Smith, Mary T.', 
+    'Sommerville And Christian Schussele, James M.', 'Stella, Frank', 'Stout, James DeForest', 
+    'Teich, C.T. Art-Colortone, Curt', 'Toulouse-Lautrec, Henri De', 'Turner, Joseph Mallord William', 
+    'Unknown', 'Van Gogh, Vincent', 'Vermeer, Johannes', 'Vuillard, Edouard', 'Waring, Laura Wheeler', 
+    'Weicheng, Qian'
   ];
 
   const handleSearch = (e: React.FormEvent) => {
@@ -61,7 +92,7 @@ export function Museum({ onImport }: MuseumProps) {
   };
 
   useEffect(() => {
-    handleFetchSource(activeSource);
+    handleFetchSource(activeSource, searchQuery);
     if (!connectedSources.has(activeSource)) {
       setConnectedSources(prev => new Set(prev).add(activeSource));
       setPoints(prev => prev + 5);
@@ -82,8 +113,7 @@ export function Museum({ onImport }: MuseumProps) {
           source: 'MET_MUSEUM',
           imageUrl: obj.primaryImageSmall,
           donationStatus: 'LIVE_UPLINK',
-          description: `Digital acquisition from The Metropolitan Museum of Art. Department: ${obj.department || 'General'}.`,
-          externalUrl: obj.objectURL
+          description: `Digital acquisition from The Metropolitan Museum of Art. Department: ${obj.department || 'General'}.`
         }));
       } else if (source === 'CHICAGO') {
         const raw = query ? await searchChicagoObjects(query, 24) : await fetchChicagoObjects(12);
@@ -95,8 +125,7 @@ export function Museum({ onImport }: MuseumProps) {
           source: 'AIC_CHICAGO',
           imageUrl: getChicagoImageUrl(obj.image_id),
           donationStatus: 'LIVE_UPLINK',
-          description: `Archival record from the Art Institute of Chicago. Department: ${obj.department_title || 'Arts'}.`,
-          externalUrl: `https://www.artic.edu/artworks/${obj.id}`
+          description: `Archival record from the Art Institute of Chicago. Department: ${obj.department_title || 'Arts'}.`
         }));
       } else if (source === 'CLEVELAND') {
         const raw = query ? await searchClevelandObjects(query, 24) : await fetchClevelandObjects(12);
@@ -108,8 +137,7 @@ export function Museum({ onImport }: MuseumProps) {
           source: 'CLEVELAND_ART',
           imageUrl: obj.images?.web?.url,
           donationStatus: 'LIVE_UPLINK',
-          description: `Open Access artifact from Cleveland Museum of Art. Department: ${obj.department || 'Curated'}.`,
-          externalUrl: `https://www.clevelandart.org/art/${obj.id}`
+          description: `Open Access artifact from Cleveland Museum of Art. Department: ${obj.department || 'Curated'}.`
         }));
       } else if (source === 'EUROPEANA') {
         const raw = query ? await searchEuropeanaObjects(query, 24) : await fetchEuropeanaObjects(12);
@@ -121,8 +149,19 @@ export function Museum({ onImport }: MuseumProps) {
           source: 'EUROPEANA_EU',
           imageUrl: obj.edmPreview?.[0] || '',
           donationStatus: 'LIVE_UPLINK',
-          description: `Digital heritage provided by ${obj.dataProvider?.[0] || 'European Institutions'}.`,
-          externalUrl: `https://www.europeana.eu/record/${obj.id}`
+          description: `Digital heritage provided by ${obj.dataProvider?.[0] || 'European Institutions'}.`
+        }));
+      } else if (source === 'TATE') {
+        const raw = query ? await searchTateObjects(query, 24) : await fetchTateObjects(12);
+        results = raw.map((obj: TateObject) => ({
+          id: `tate-${obj.id}`,
+          title: obj.title?.[0] || 'UNTITLED',
+          author: obj.dcCreator?.[0] || 'TATE_COLLECTION',
+          year: obj.year?.[0] || 'N/A',
+          source: 'TATE_BRITAIN',
+          imageUrl: obj.edmPreview?.[0] || '',
+          donationStatus: 'LIVE_UPLINK',
+          description: `British heritage record from the Tate Gallery archives.`
         }));
       }
       setApiArtifacts(results.filter(r => r.imageUrl));
@@ -143,12 +182,15 @@ export function Museum({ onImport }: MuseumProps) {
           <Landmark size={64} />
         </div>
         <div className="flex-1 space-y-6">
-           <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="inline-flex items-center gap-2 bg-black text-white px-3 py-1 text-[10px] font-black uppercase italic">
                  <History size={14} className="text-pop-yellow" />
                  Global_Historical_Sync
               </div>
               <div className="flex items-center gap-4">
+                 <div className="bg-pop-pink text-white px-2 py-1 text-[8px] font-black uppercase italic animate-pulse brutal-border-sm">
+                    PHASE_04: NEW_TEST_IN_MUSEUM
+                 </div>
                  <div className="hidden sm:flex items-center gap-2 bg-pop-pink/10 border-2 border-pop-pink px-2 py-1">
                     <span className="text-[8px] font-black italic text-pop-pink uppercase tracking-tighter">10%_DONATION_PLEDGE</span>
                     <div className="w-1 h-1 rounded-full bg-pop-pink animate-pulse" />
@@ -169,10 +211,10 @@ export function Museum({ onImport }: MuseumProps) {
                  </div>
               </div>
            </div>
-           <h2 className="leading-none mb-4 italic truncate">UPLINK_MUSEUM_COLLECTION</h2>
+           <h2 className="leading-none mb-4 uppercase italic truncate">ArtCyber_Library_Sync</h2>
            
            <div className="flex flex-wrap gap-3">
-              {(['MET', 'CHICAGO', 'CLEVELAND', 'EUROPEANA'] as MuseumSourceType[]).map((src) => (
+              {(['MET', 'CHICAGO', 'CLEVELAND', 'EUROPEANA', 'TATE'] as MuseumSourceType[]).map((src) => (
                 <button
                   key={src}
                   onClick={() => setActiveSource(src)}
@@ -195,7 +237,7 @@ export function Museum({ onImport }: MuseumProps) {
               </button>
            </div>
            
-           <form onSubmit={handleSearch} className="relative group max-w-xl mb-6">
+            <form onSubmit={handleSearch} className="relative group max-w-xl mb-6">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30 group-hover:text-pop-cyan transition-colors" size={20} />
               <input 
                 type="text"
@@ -212,6 +254,50 @@ export function Museum({ onImport }: MuseumProps) {
                 {isLoading ? 'SYNCING...' : 'SYNC_QUERY'}
               </button>
             </form>
+
+            <div className="space-y-4">
+              <div className="flex flex-col gap-2">
+                 <label className="text-[10px] font-black opacity-40 uppercase italic px-1">Quick_Sync_Collections</label>
+                 <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                    {COLLECTIONS.map(col => (
+                       <button
+                         key={col}
+                         onClick={() => {
+                           setSearchQuery(col);
+                           handleFetchSource(activeSource, col);
+                         }}
+                         className={cn(
+                           "shrink-0 px-4 py-2 brutal-border-sm text-[10px] font-black uppercase italic transition-all whitespace-nowrap",
+                           searchQuery === col ? "bg-pop-cyan text-black" : "bg-white hover:bg-pop-yellow"
+                         )}
+                       >
+                         {col}
+                       </button>
+                    ))}
+                 </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                 <label className="text-[10px] font-black opacity-40 uppercase italic px-1">Historical_Masters_&_Authors</label>
+                 <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                    {AUTHORS.map(author => (
+                       <button
+                         key={author}
+                         onClick={() => {
+                           setSearchQuery(author);
+                           handleFetchSource(activeSource, author);
+                         }}
+                         className={cn(
+                           "shrink-0 px-4 py-2 brutal-border-sm text-[10px] font-black uppercase italic transition-all whitespace-nowrap",
+                           searchQuery === author ? "bg-pop-pink text-white" : "bg-white hover:bg-pop-yellow"
+                         )}
+                       >
+                         {author}
+                       </button>
+                    ))}
+                 </div>
+              </div>
+           </div>
          </div>
       </div>
 
@@ -224,41 +310,51 @@ export function Museum({ onImport }: MuseumProps) {
            </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <AnimatePresence mode="popLayout">
-            {combinedCollection.map((artifact) => (
-              <motion.div
-                key={artifact.id}
-                layout
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                onClick={() => setSelectedArtifact(artifact)}
-                className="group cursor-pointer"
-              >
-                <div className="brutal-border bg-white p-4 brutal-shadow-sm group-hover:brutal-shadow transition-all relative overflow-hidden h-full flex flex-col">
-                  <div className="aspect-[4/5] bg-gray-100 brutal-border mb-4 overflow-hidden flex items-center justify-center">
-                     <img src={artifact.imageUrl} className="max-w-full max-h-full object-contain grayscale group-hover:grayscale-0 transition-all duration-700 hover:scale-110" alt={artifact.title} />
+        {combinedCollection.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <AnimatePresence mode="popLayout">
+              {combinedCollection.map((artifact) => (
+                <motion.div
+                  key={artifact.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  onClick={() => setSelectedArtifact(artifact)}
+                  className="group cursor-pointer"
+                >
+                  <div className="brutal-border bg-white p-4 brutal-shadow-sm group-hover:brutal-shadow transition-all relative overflow-hidden h-full flex flex-col">
+                    <div className="aspect-[4/5] bg-gray-100 brutal-border mb-4 overflow-hidden flex items-center justify-center">
+                       <img src={artifact.imageUrl} className="max-w-full max-h-full object-contain grayscale group-hover:grayscale-0 transition-all duration-700 hover:scale-110" alt={artifact.title} />
+                    </div>
+                    <div className="flex flex-col flex-1">
+                       <p className="text-[9px] font-black uppercase tracking-tighter opacity-50">{artifact.source}</p>
+                       <h3 className="text-xl font-black italic uppercase tracking-tighter leading-none mb-2">{artifact.title}</h3>
+                       <div className="mt-auto flex justify-between items-center">
+                          <p className="text-[10px] font-bold opacity-60 italic">{artifact.author}</p>
+                          <span className={cn(
+                             "px-2 py-0.5 text-[8px] font-black uppercase brutal-border-sm",
+                             artifact.donationStatus === 'PRESERVED' ? "bg-pop-green" :
+                             artifact.donationStatus === 'DIGITIZING' ? "bg-pop-cyan" : "bg-pop-yellow"
+                          )}>
+                             {artifact.donationStatus}
+                          </span>
+                       </div>
+                    </div>
                   </div>
-                  <div className="flex flex-col flex-1">
-                     <p className="text-[9px] font-black uppercase tracking-tighter opacity-50">{artifact.source}</p>
-                     <h3 className="text-xl font-black italic uppercase tracking-tighter leading-none mb-2">{artifact.title}</h3>
-                     <div className="mt-auto flex justify-between items-center">
-                        <p className="text-[10px] font-bold opacity-60 italic">{artifact.author}</p>
-                        <span className={cn(
-                           "px-2 py-0.5 text-[8px] font-black uppercase brutal-border-sm",
-                           artifact.donationStatus === 'PRESERVED' ? "bg-pop-green" :
-                           artifact.donationStatus === 'DIGITIZING' ? "bg-pop-cyan" : "bg-pop-yellow"
-                        )}>
-                           {artifact.donationStatus}
-                        </span>
-                     </div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        ) : !isLoading && (
+          <div className="py-20 text-center space-y-4 brutal-border bg-gray-50">
+             <Library size={64} className="mx-auto text-black/10" />
+             <p className="font-black uppercase italic opacity-30 text-xl">
+               NO_ARTIFACT_NODES_DETECTED_FOR_SEARCH: "{searchQuery || 'INITIAL_SCAN'}"
+             </p>
+             <p className="text-[10px] font-bold uppercase opacity-40">Try a different collection or master artist name.</p>
+          </div>
+        )}
       </div>
 
       {/* Detailed Modal */}
@@ -384,26 +480,29 @@ export function Museum({ onImport }: MuseumProps) {
                                    onClick={() => setIsZoomed(!isZoomed)}
                                    className={cn(
                                      "brutal-btn flex items-center justify-center gap-2 py-4 font-black text-xs group transition-all",
-                                     isZoomed ? "bg-pop-cyan text-black" : "bg-black text-white"
+                                     isZoomed ? "bg-pop-cyan text-black" : "bg-black text-white",
+                                     selectedArtifact.source === 'TATE_BRITAIN' && "col-span-2"
                                    )}
                                  >
                                     {isZoomed ? <ZoomOut size={20} /> : <ZoomIn size={20} />}
                                     {isZoomed ? 'EXIT_MAGNIFICATION' : 'ZOOM_EXPLORATION'}
                                  </button>
-                                 <button 
-                                   onClick={() => {
-                                      const link = document.createElement('a');
-                                      link.href = selectedArtifact.imageUrl;
-                                      link.download = `${selectedArtifact.title.replace(/\s+/g, '_')}_ARCHIVE.jpg`;
-                                      document.body.appendChild(link);
-                                      link.click();
-                                      document.body.removeChild(link);
-                                   }}
-                                   className="brutal-btn bg-pop-green text-black flex items-center justify-center gap-2 py-4 font-black text-xs hover:bg-pop-pink"
-                                 >
-                                    <Download size={20} />
-                                    DOWNLOAD_UPLINK
-                                 </button>
+                                 {selectedArtifact.source !== 'TATE_BRITAIN' && (
+                                   <button 
+                                     onClick={() => {
+                                        const link = document.createElement('a');
+                                        link.href = selectedArtifact.imageUrl;
+                                        link.download = `${selectedArtifact.title.replace(/\s+/g, '_')}_ARCHIVE.jpg`;
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
+                                     }}
+                                     className="brutal-btn bg-pop-green text-black flex items-center justify-center gap-2 py-4 font-black text-xs hover:bg-pop-pink"
+                                   >
+                                      <Download size={20} />
+                                      DOWNLOAD_UPLINK
+                                   </button>
+                                 )}
                               </div>
                             </>
                           ) : (
@@ -474,28 +573,6 @@ export function Museum({ onImport }: MuseumProps) {
                                           </div>
                                        </div>
 
-                                       {/* Selection: Frame */}
-                                       <div className="space-y-3">
-                                          <label className="text-[10px] font-black uppercase text-gray-500 italic block">Step_03: Frame_Integration</label>
-                                          <button
-                                            onClick={() => setIsFramed(!isFramed)}
-                                            className={cn(
-                                              "w-full brutal-border-sm p-4 flex items-center justify-between transition-all",
-                                              isFramed ? "bg-black text-white" : "bg-white hover:bg-gray-50 text-black"
-                                            )}
-                                          >
-                                             <div className="flex items-center gap-3">
-                                                <div className={cn(
-                                                   "w-5 h-5 brutal-border-sm flex items-center justify-center",
-                                                   isFramed ? "bg-pop-pink" : "bg-gray-100"
-                                                )}>
-                                                   {isFramed && <CheckCircle2 size={12} className="text-white" />}
-                                                </div>
-                                                <span className="text-xs font-black uppercase">Professional_Gallery_Frame</span>
-                                             </div>
-                                             <span className="text-xs font-black">+$50.00</span>
-                                          </button>
-                                       </div>
                                     </>
                                   ) : checkoutStep === 'PAYMENT' ? (
                                     <div className="space-y-6">
@@ -509,7 +586,7 @@ export function Museum({ onImport }: MuseumProps) {
                                                    { id: 'small', price: 70 }, { id: 'medium', price: 100 }, { id: 'large', price: 175 }, { id: 'extra_large', price: 250 }
                                                 ];
                                                 const base = tiers.find(t => t.id === orderSize)?.price || 0;
-                                                const subtotal = base + (isFramed ? 50 : 0);
+                                                const subtotal = base;
                                                 return subtotal + (subtotal * 0.1);
                                              })()).toFixed(2)}
                                           </p>
@@ -592,7 +669,7 @@ export function Museum({ onImport }: MuseumProps) {
                                               { id: 'medium', price: 100 },
                                               { id: 'large', price: 175 },
                                               { id: 'extra_large', price: 250 }
-                                            ]).find(t => t.id === orderSize)?.price || 0) + (isFramed ? 50 : 0)) * 0.1).toFixed(2)}
+                                            ]).find(t => t.id === orderSize)?.price || 0)) * 0.1).toFixed(2)}
                                           </p>
                                        </div>
                                     </div>

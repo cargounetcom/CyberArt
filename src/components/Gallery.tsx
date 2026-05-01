@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Ghost, Snowflake, Zap, Skull, Box, Share2, Download, Search, Filter, Layers, History, Sparkles } from 'lucide-react';
+import { Ghost, Snowflake, Zap, Skull, Box, Share2, Download, Search, Filter, Layers, History, Sparkles, Wand2 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 
 interface Work {
@@ -227,6 +227,32 @@ const LIBRARY_WORKS: Work[] = [
     match: 97
   },
   {
+    id: 'remix-vangogh-cyber-2',
+    title: 'VAN_GOGH_CYBER_SKU_02',
+    author: 'VINCENT_VAN_GOGH',
+    year: '1888 / 2026',
+    style: 'CYBER_IMPRESSIONISM',
+    color: '#FBBF24',
+    prompt: 'Sunflowers remix, neon yellow circuit petals, molten glass texture, holographic stems, dark industrial background, cyberpunk AI aesthetic',
+    imageUrl: 'https://pollinations.ai/p/Sunflowers%20remix%20neon%20circuitry%20glowing%20petals%20cyberpunk?width=1024&height=1024&seed=3312&nologo=true',
+    originalUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Vincent_Willem_van_Gogh_127.jpg/800px-Vincent_Willem_van_Gogh_127.jpg',
+    category: 'REMIX',
+    match: 98
+  },
+  {
+    id: 'remix-vangogh-cyber-3',
+    title: 'VAN_GOGH_CYBER_SKU_03',
+    author: 'VINCENT_VAN_GOGH',
+    year: '1889 / 2026',
+    style: 'NEURAL_POST_IMPRESSIONISM',
+    color: '#312E81',
+    prompt: 'Self-Portrait with Bandaged Ear remix, neural glowing eye implant, swirling brushstrokes as data streams, deep indigo and teal cyberpunk lighting',
+    imageUrl: 'https://pollinations.ai/p/Van%20Gogh%20self-portrait%20remix%20cyber%20implants%20neon%20brushstrokes?width=1024&height=1024&seed=4412&nologo=true',
+    originalUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Vincent_van_Gogh_-_Self-portrait_with_bandaged_ear_%281889%2C_Courtauld_Institute%29.jpg/800px-Vincent_van_Gogh_-_Self-portrait_with_bandaged_ear_%281889%2C_Courtauld_Institute%29.jpg',
+    category: 'REMIX',
+    match: 99
+  },
+  {
     id: 'remix-mona',
     title: 'CYBER_LISA_MOD',
     author: 'LEONARDO_DA_VINCI',
@@ -285,7 +311,7 @@ const LIBRARY_WORKS: Work[] = [
   }
 ];
 
-export function Gallery({ onRemix }: { onRemix: (canvas: any) => void }) {
+export function Gallery({ onRemix, onEvolutionRemix, onNavigate }: { onRemix: (canvas: any) => void, onEvolutionRemix: (image: string, prompt: string) => void, onNavigate: (view: any) => void }) {
   const [filter, setFilter] = useState<'ALL' | 'NEURAL' | 'REMIX' | 'FREE'>('ALL');
   const [matchRange, setMatchRange] = useState<number>(1);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -301,15 +327,24 @@ export function Gallery({ onRemix }: { onRemix: (canvas: any) => void }) {
       {/* Header */}
       <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-8 border-b-8 border-black pb-8">
         <div className="space-y-4">
-          <div>
-            <h2 className="text-6xl font-black italic tracking-tighter uppercase leading-none">ArtRemix_Library</h2>
-            <div className="flex items-center gap-4 mt-2">
-               <p className="text-xs font-bold uppercase tracking-widest text-[#666]">Historical Masterpieces meets Neural Hallucinations</p>
-               <div className="flex items-center gap-2 bg-black text-white px-2 py-0.5 text-[9px] font-black brutal-border-sm">
-                  <div className="w-1.5 h-1.5 bg-pop-green rounded-full animate-pulse" />
-                  ARTS_CULTURE_SYNC: ACTIVE
-               </div>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 className="text-6xl font-black italic tracking-tighter uppercase leading-none">ArtRemix_Library</h2>
+              <div className="flex items-center gap-4 mt-2">
+                 <p className="text-xs font-bold uppercase tracking-widest text-[#666]">Historical Masterpieces meets Neural Hallucinations</p>
+                 <div className="flex items-center gap-2 bg-black text-white px-2 py-0.5 text-[9px] font-black brutal-border-sm">
+                    <div className="w-1.5 h-1.5 bg-pop-green rounded-full animate-pulse" />
+                    ARTS_CULTURE_SYNC: ACTIVE
+                 </div>
+              </div>
             </div>
+            <button 
+              onClick={() => onNavigate('marketplace')}
+              className="brutal-btn bg-pop-cyan flex items-center gap-2 group"
+            >
+               <Zap size={16} className="group-hover:text-pop-yellow transition-colors" fill="currentColor" />
+               MARKET_SYNK
+            </button>
           </div>
           
           <div className="flex flex-wrap gap-2">
@@ -439,30 +474,49 @@ export function Gallery({ onRemix }: { onRemix: (canvas: any) => void }) {
                     </p>
                   </div>
 
-                  <div className="mt-auto space-y-3">
-                    <button 
-                      onClick={() => onRemix({
-                        id: work.id,
-                        name: work.title,
-                        shapes: JSON.stringify([{
-                          id: `remix-${Date.now()}`,
-                          type: 'image',
-                          x: 50,
-                          y: 50,
-                          width: 400,
-                          height: 400 * (work.category === 'REMIX' ? 1 : 1),
-                          fill: 'transparent',
-                          rotation: 0,
-                          imageSource: work.imageUrl,
-                          depth: 30,
-                          tilt: 45
-                        }])
-                      })}
-                      className="brutal-btn w-full bg-pop-green flex items-center justify-center gap-2 group/btn"
-                    >
-                      <Sparkles size={16} className="group-hover/btn:rotate-12 transition-transform" />
-                      LOAD_INTO_3D_ENGINE
-                    </button>
+                    <div className="mt-auto space-y-3">
+                      <div className="grid grid-cols-2 gap-2">
+                        <button 
+                          onClick={() => onRemix({
+                            id: work.id,
+                            name: work.title,
+                            shapes: JSON.stringify([{
+                              id: `remix-${Date.now()}`,
+                              type: 'image',
+                              x: 50,
+                              y: 50,
+                              width: 400,
+                              height: 400,
+                              fill: 'transparent',
+                              rotation: 0,
+                              imageSource: work.imageUrl,
+                              depth: 30,
+                              tilt: 45
+                            }])
+                          })}
+                          className="brutal-btn-sm bg-pop-green flex items-center justify-center gap-2 group/btn h-12"
+                        >
+                          <Sparkles size={14} className="group-hover/btn:rotate-12 transition-transform" />
+                          <span className="text-[10px]">ENGINE</span>
+                        </button>
+                        <button 
+                          onClick={() => onEvolutionRemix(work.imageUrl, work.prompt)}
+                          className="brutal-btn-sm bg-pop-pink text-white flex items-center justify-center gap-2 group/btn h-12"
+                        >
+                          <Wand2 size={14} className="group-hover/btn:animate-pulse" />
+                          <span className="text-[10px]">FORGE</span>
+                        </button>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 gap-2">
+                        <button 
+                          onClick={() => onNavigate('marketplace')}
+                          className="brutal-btn-sm bg-pop-cyan flex items-center justify-center gap-2 group/btn h-12"
+                        >
+                          <Zap size={14} fill="currentColor" />
+                          <span className="text-[10px]">MARKET_LISTING</span>
+                        </button>
+                      </div>
                     
                     <div className="flex justify-between items-center text-[9px] font-black uppercase opacity-60">
                       <span className="flex items-center gap-1">
@@ -480,25 +534,6 @@ export function Gallery({ onRemix }: { onRemix: (canvas: any) => void }) {
             </motion.div>
           ))}
         </AnimatePresence>
-      </div>
-
-      {/* Collective Frame Banner */}
-      <div className="brutal-border p-12 bg-black text-white relative overflow-hidden">
-        <div className="relative z-10 max-w-2xl">
-          <h2 className="text-4xl font-black italic mb-4">NEURAL_COLLECTIVE_v1</h2>
-          <p className="font-bold opacity-70 mb-8 border-l-4 border-pop-yellow pl-6 uppercase text-xs leading-loose">
-            Explore the intersection of history and hallucination. Our ArtRemix module allows you to take any historical asset and apply point-gradiant-glass transformations. Every export is archival grade.
-          </p>
-          <div className="flex gap-4">
-             <button className="brutal-btn bg-white text-black px-8">EXPAND_LIBRARIES</button>
-             <button className="brutal-btn border-white bg-transparent text-white px-8">neural_specs.pdf</button>
-          </div>
-        </div>
-        <div className="absolute top-0 right-0 w-1/3 h-full opacity-30 flex flex-wrap gap-1 p-2 overflow-hidden pointer-events-none">
-           {[...Array(60)].map((_, i) => (
-             <div key={i} className="w-6 h-6 bg-white/20 brutal-border-sm" />
-           ))}
-        </div>
       </div>
     </div>
   );

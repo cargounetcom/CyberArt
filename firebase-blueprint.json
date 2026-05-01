@@ -45,6 +45,20 @@
         "entityId": { "type": "string" }
       },
       "required": ["type", "message", "timestamp"]
+    },
+    "LockerItem": {
+      "title": "Digital Locker Item",
+      "description": "Securely stored neural assets, licenses, or private collections.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "content": { "type": "string", "description": "The payload (JSON or encrypted string)" },
+        "ownerId": { "type": "string" },
+        "accessTier": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "content", "ownerId", "createdAt"]
     }
   },
   "firestore": {
@@ -59,6 +73,10 @@
     "live_events/{eventId}": {
       "schema": "LiveEvent",
       "description": "Real-time activity feed."
+    },
+    "locker/{itemId}": {
+      "schema": "LockerItem",
+      "description": "Private user and admin storage."
     }
   }
 }

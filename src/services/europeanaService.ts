@@ -5,6 +5,7 @@ export interface EuropeanaObject {
   dcCreator?: string[];
   year?: string[];
   edmPreview?: string[];
+  edmIsShownBy?: string[];
   dataProvider: string[];
 }
 

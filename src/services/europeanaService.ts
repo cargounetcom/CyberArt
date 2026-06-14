@@ -12,7 +12,7 @@ export interface EuropeanaObject {
 const BASE_URL = 'https://api.europeana.eu/record/v2';
 // NOTE: Europeana usually requires a key. Using a generic search might work for some items.
 // If this fails, we will fallback to mock or inform user.
-const WSKEY = 'api2demo'; // Common demo key for Europeana
+const WSKEY = import.meta.env.VITE_EUROPEANA_API_KEY || ''; // Common demo key for Europeana
 
 export async function fetchEuropeanaObjects(limit: number = 10): Promise<EuropeanaObject[]> {
   try {

@@ -10,7 +10,7 @@ export interface TateObject {
 }
 
 const BASE_URL = 'https://api.europeana.eu/record/v2';
-const WSKEY = 'api2demo'; // Common demo key for Europeana
+const WSKEY = import.meta.env.VITE_EUROPEANA_API_KEY || ''; // Common demo key for Europeana
 
 export async function fetchTateObjects(limit: number = 12): Promise<TateObject[]> {
   try {

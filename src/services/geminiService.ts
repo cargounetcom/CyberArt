@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
 export interface ComicScript {
   topic: string;
@@ -15,7 +15,7 @@ export interface ComicScript {
 export async function generateTrendReport() {
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.0-flash",
       contents: "Generate a short JSON report about current fictional cyberpunk neural art trends. Mention styles like 'Brutalist_Pulse' and 'Chrome_Gothic'. Return ONLY JSON.",
     });
     return JSON.parse(response.text);
@@ -28,7 +28,7 @@ export async function generateTrendReport() {
 export async function generateNeuralSeed(assetType: string = 'NEURAL_ASSET') {
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.0-flash",
       contents: `Generate a short, intense, cyberpunk-style neural seed metadata description for a ${assetType}. Use neo-brutalist terminology. Keep it under 20 words. Format: [ID: XXX] followed by the description.`,
     });
     return response.text;
@@ -44,7 +44,7 @@ export async function analyzeAsset(imageUrl: string) {
     const isDataUrl = imageUrl.startsWith('data:');
     
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.0-flash",
       contents: isDataUrl ? [
         {
           inlineData: {
@@ -67,7 +67,7 @@ export async function analyzeAsset(imageUrl: string) {
 export async function remixPrompt(originalPrompt: string, remixInstruction: string) {
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.0-flash",
       contents: `You are an expert AI Art Prompt Engineer. Take this original description: "${originalPrompt}" and apply the following remix/modification instruction: "${remixInstruction}". 
       Produce a NEW, highly descriptive, single-paragraph prompt for a high-end image generator (like Stable Diffusion). 
       Ensure it keeps the core concept but evolves it intensely in a cyberpunk/neo-brutalist style. 
@@ -83,7 +83,7 @@ export async function remixPrompt(originalPrompt: string, remixInstruction: stri
 export async function changeOutfitPrompt(originalPrompt: string, newOutfitStyle: string) {
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.0-flash",
       contents: `You are a fashion-tech AI. Take this description of a person: "${originalPrompt}". 
       Keep the face, hair, and physical features EXACTLY the same, but COMPLETELY change their clothing to: "${newOutfitStyle}". 
       Ensure the new outfit is described in a hyper-detailed cyberpunk or high-fashion aesthetic. 
@@ -99,7 +99,7 @@ export async function changeOutfitPrompt(originalPrompt: string, newOutfitStyle:
 export async function changeBackgroundPrompt(originalPrompt: string, newBackground: string) {
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.0-flash",
       contents: `You are an architectural/environment AI. Take this image description: "${originalPrompt}". 
       Keep the main subject (person/object) EXACTLY the same, but COMPLETELY change the background/setting to: "${newBackground}". 
       Ensure the new environment is described in a hyper-detailed cyberpunk, neo-brutalist, or futuristic aesthetic. 
@@ -115,7 +115,7 @@ export async function changeBackgroundPrompt(originalPrompt: string, newBackgrou
 export async function recolorAssetPrompt(originalPrompt: string, colorScheme: string) {
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.0-flash",
       contents: `You are a color theory AI. Take this image description: "${originalPrompt}". 
       Keep all structures and subjects the same, but modify the entire color palette to: "${colorScheme}". 
       Describe the textures, lighting, and materials reflecting this new color scheme in a cyberpunk aesthetic. 
@@ -131,7 +131,7 @@ export async function recolorAssetPrompt(originalPrompt: string, colorScheme: st
 export async function upscaleRefinePrompt(originalPrompt: string) {
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.0-flash",
       contents: `You are a detail-enhancement AI. Take this image description: "${originalPrompt}". 
       Rewrite it with extreme focus on micro-details, hyper-realistic textures, intricate patterns, and cinematic 8k lighting. 
       The goal is to provide a comprehensive prompt for a high-resolution "upscaled" version of the original concept. 
@@ -147,7 +147,7 @@ export async function upscaleRefinePrompt(originalPrompt: string) {
 export async function generateMemeCaptions(subject: string) {
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.0-flash",
       contents: `Generate 4 short, witty, and cynical cyberpunk-themed meme captions for the subject: "${subject}". Return ONLY a JSON array of strings.`,
       config: {
         responseMimeType: "application/json",
@@ -167,7 +167,7 @@ export async function generateMemeCaptions(subject: string) {
 export async function generateComicScript(topic: string): Promise<ComicScript> {
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.0-flash",
       contents: `Generate a 4-panel cyberpunk comic script about: "${topic}". For each panel provide: visualDescription, dialogue, and caption.`,
       config: {
         responseMimeType: "application/json",
